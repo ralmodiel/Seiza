@@ -16,6 +16,10 @@ import { avatarUpdateEvery } from "./avatarDetail";
 import { isPlayerHidden } from "./playerFilter";
 import type { PlayerState } from "./types";
 import { RemoteMotion } from "./remoteMotion";
+import { viewerPosition } from "../xr/viewer";
+
+/** The viewer's eyes in the world (see viewerPosition). */
+const scratchEye = new THREE.Vector3();
 
 interface RemotePlayersProps {
   players: Record<string, PlayerState>;
@@ -82,6 +86,7 @@ export function RemotePlayers({ players, selfId, speakingLevels, lastMessages, g
     const view = gl.xr.isPresenting ? gl.xr.getCamera() : state.camera;
     viewProjection.current.multiplyMatrices(view.projectionMatrix, view.matrixWorldInverse);
     frustum.current.setFromProjectionMatrix(viewProjection.current);
+    const eye = viewerPosition(state.camera, scratchEye);
     const remotes = Object.values(playersRef.current).filter((player) => player.id !== selfId);
     const detail = detailRef.current;
     detail.clear();
@@ -90,7 +95,7 @@ export function RemotePlayers({ players, selfId, speakingLevels, lastMessages, g
       sphere.current.radius = VIEW_RADIUS;
       const every = avatarUpdateEvery({
         inView: frustum.current.intersectsSphere(sphere.current),
-        distance: sphere.current.center.distanceTo(state.camera.position),
+        distance: sphere.current.center.distanceTo(eye),
         remoteCount: remotes.length,
       });
       if (every > 1) detail.set(player.id, every);
@@ -100,7 +105,7 @@ export function RemotePlayers({ players, selfId, speakingLevels, lastMessages, g
       .filter((player) => player.id !== selfId && player.media?.camera)
       .map((player) => ({
         id: player.id,
-        distance: state.camera.position.distanceToSquared(
+        distance: eye.distanceToSquared(
           new THREE.Vector3(player.position[0], player.position[1], player.position[2])
         ),
       }))
@@ -209,7 +214,7 @@ function RemotePlayerAvatar({
     // of you should disappear, and vertical distance to their hips
     // shouldn't rescue them. Hysteresis stops an avatar hovering at the
     // boundary from strobing.
-    const camera = state.camera.position;
+    const camera = viewerPosition(state.camera, scratchEye);
     const dx = camera.x - group.position.x;
     const dz = camera.z - group.position.z;
     const distance = Math.hypot(dx, dz);

@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { viewerPosition } from "../xr/viewer";
+
+/** The viewer's eyes in the world (see viewerPosition). */
+const scratchEye = new THREE.Vector3();
 
 interface VideoPanelProps {
   stream: MediaStream | null;
@@ -184,7 +188,7 @@ export function VideoPanel({ stream, width, height, maxDistance = 30, active = t
     if (elapsed.current < CHECK_INTERVAL) return;
     elapsed.current = 0;
 
-    const distance = state.camera.position.distanceTo(mesh.getWorldPosition(new THREE.Vector3()));
+    const distance = viewerPosition(state.camera, scratchEye).distanceTo(mesh.getWorldPosition(new THREE.Vector3()));
     const shouldShow = active && distance <= maxDistance;
     mesh.visible = shouldShow;
     if (shouldShow && !playing.current) {

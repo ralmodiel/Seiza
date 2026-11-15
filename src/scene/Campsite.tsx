@@ -9,6 +9,10 @@ import { PooledLight } from "./LightPool";
 import { nightNeed } from "./roomLights";
 import { poolTexture } from "./UnderGlow";
 import { CAMP_CHAIRS, CAMP_SEAT_HEIGHT, CAMPFIRE, FIELD_Y, SLEEPING_BAG, TENT, TENT_YAW } from "./layout";
+import { viewerPosition } from "../xr/viewer";
+
+/** The viewer's eyes in the world (see viewerPosition). */
+const scratchEye = new THREE.Vector3();
 
 /**
  * The campsite on the meadow beyond the garden: a campfire ringed with
@@ -71,7 +75,7 @@ export function Campsite({
 
   const tentFade = useRef(1);
   useFrame(({ camera }, delta) => {
-    const target = inBed !== insideTent(camera.position) ? TENT_SEE_THROUGH : 1;
+    const target = inBed !== insideTent(viewerPosition(camera, scratchEye)) ? TENT_SEE_THROUGH : 1;
     if (tentFade.current === target) return;
     tentFade.current = THREE.MathUtils.damp(tentFade.current, target, 8, delta);
     if (Math.abs(tentFade.current - target) < 0.01) tentFade.current = target;
@@ -271,7 +275,8 @@ function Fire({ lit }: { lit: boolean }) {
       firstRender.current = false;
       return;
     }
-    playFireToggle(lit, Math.hypot(camera.position.x - CAMPFIRE[0], camera.position.z - CAMPFIRE[1]));
+    const eye = viewerPosition(camera, scratchEye);
+    playFireToggle(lit, Math.hypot(eye.x - CAMPFIRE[0], eye.z - CAMPFIRE[1]));
   }, [lit, camera]);
 
   const parts = useMemo(() => {
@@ -325,7 +330,8 @@ function Fire({ lit }: { lit: boolean }) {
     // Embers glow brighter as the flames die down, then settle dim.
     parts.embers.color.setRGB(1, 0.29, 0.08).multiplyScalar(0.25 + 0.75 * on);
     intensity.current = FIRE_INTENSITY * on * flicker;
-    setFireAmbience(Math.hypot(state.camera.position.x - CAMPFIRE[0], state.camera.position.z - CAMPFIRE[1]), on, delta);
+    const eye = viewerPosition(state.camera, scratchEye);
+    setFireAmbience(Math.hypot(eye.x - CAMPFIRE[0], eye.z - CAMPFIRE[1]), on, delta);
   });
 
   const [x, z] = CAMPFIRE;

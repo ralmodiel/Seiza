@@ -16,6 +16,10 @@ import { SEAT_HEIGHT } from "../scene/layout";
 import { playClap, playFootstep, playWaterRipple } from "../audio/sfx";
 import { surfaceAt } from "../scene/layout";
 import { CROUCH_GESTURE_NAME, GESTURE_SOUND_TIMES } from "./gestures";
+import { viewerPosition } from "../xr/viewer";
+
+/** The viewer's eyes in the world (see viewerPosition). */
+const scratchEye = new THREE.Vector3();
 
 /**
  * Drives every avatar's body animation from VRM Animation clips, in three
@@ -650,7 +654,7 @@ export function AvatarAnimator({
 
       // Distance from the camera, so sounds this avatar makes fade with
       // range the way its voice does.
-      distanceToCameraRef.current = frameState.camera.position.distanceTo(position);
+      distanceToCameraRef.current = viewerPosition(frameState.camera, scratchEye).distanceTo(position);
 
       if (state.lastPosition && delta > 0) {
         const instant = Math.hypot(position.x - state.lastPosition.x, position.z - state.lastPosition.z) / delta;

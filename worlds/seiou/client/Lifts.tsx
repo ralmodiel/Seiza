@@ -16,6 +16,10 @@ import type { WorldStateValue } from "../../../src/multiplayer/types";
 import { isOn, useLightZones } from "./RoomLights";
 import { L, useLang } from "../../../src/i18n/lang";
 import { wrapLines } from "../../../src/ui/wrapLines";
+import { viewerPosition } from "../../../src/xr/viewer";
+
+/** The viewer's eyes in the world (see viewerPosition). */
+const scratchEye = new THREE.Vector3();
 
 /** Each building's name in Japanese, by its id in floors.json. */
 const BUILDING_JA: Record<string, string> = {
@@ -124,7 +128,8 @@ function Kiosk({ building, floors, here, warp, light }: { building: string; floo
   // Beside the spot you arrive at, facing it; drawn only when near.
   const at = floors[here].at;
   useFrame(({ camera }) => {
-    if (group.current) group.current.visible = Math.hypot(camera.position.x - at[0], camera.position.z - at[2]) < SHOW_WITHIN;
+    const eye = viewerPosition(camera, scratchEye);
+    if (group.current) group.current.visible = Math.hypot(eye.x - at[0], eye.z - at[2]) < SHOW_WITHIN;
   });
   const panelH = (W * height) / PX;
   return (

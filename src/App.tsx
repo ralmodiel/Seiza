@@ -113,6 +113,11 @@ const xrStore = createXRStore({
   // tap; the library's would press buttons a second time.
   gaze: false,
   screenInput: false,
+  // The library asks for the headset's highest refresh rate by default:
+  // 120 Hz on a Quest 2 or 3, 8 ms a frame, which avatars, shadows, and
+  // a full room can't hold, so frames drop and the view judders. 72 Hz is
+  // the Quest's own default and holds; a headset without it keeps its own.
+  frameRate: (rates) => (Array.from(rates).includes(72) ? 72 : false),
   ...(xrEmulateGaze ? { emulate: { type: "metaQuest3" as const, stereoEnabled: true, syntheticEnvironment: false } } : {}),
 });
 if (xrEmulateGaze) {

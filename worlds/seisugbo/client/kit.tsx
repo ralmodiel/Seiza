@@ -9,6 +9,10 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { nightNeed, roomLights, signWashTexture } from "../../../src/scene/roomLights";
 import { drawWrapped } from "../../../src/ui/wrapLines";
+import { viewerPosition } from "../../../src/xr/viewer";
+
+/** The viewer's eyes in the world (see viewerPosition). */
+const scratchEye = new THREE.Vector3();
 
 export const FONT = "system-ui, -apple-system, 'Segoe UI', 'Hiragino Sans', 'Noto Sans CJK JP', 'Yu Gothic', sans-serif";
 
@@ -255,12 +259,12 @@ export function useNearbyPicture(url: string, anchor: React.RefObject<THREE.Obje
   useFrame((state) => {
     camera.current = state.camera;
     if (wanted.current || !anchor.current) return;
-    if (anchor.current.getWorldPosition(scratch).distanceTo(state.camera.position) > range) return;
+    if (anchor.current.getWorldPosition(scratch).distanceTo(viewerPosition(state.camera, scratchEye)) > range) return;
     wanted.current = true;
     const priority = () => {
       const a = anchor.current;
       const c = camera.current;
-      return a && c ? a.getWorldPosition(new THREE.Vector3()).distanceTo(c.position) : 1e9;
+      return a && c ? a.getWorldPosition(new THREE.Vector3()).distanceTo(viewerPosition(c, new THREE.Vector3())) : 1e9;
     };
     loadPicture(url, priority).then(setTexture, (error) => console.warn(`[seisugbo] Could not load ${url}.`, error));
   });
@@ -278,7 +282,8 @@ export function useDrawDistance(ref: React.RefObject<THREE.Object3D | null>, cen
     since.current += delta;
     if (since.current < 0.25 || !ref.current) return;
     since.current = 0;
-    ref.current.visible = Math.hypot(camera.position.x - centre[0], camera.position.z - centre[1]) < range;
+    const eye = viewerPosition(camera, scratchEye);
+    ref.current.visible = Math.hypot(eye.x - centre[0], eye.z - centre[1]) < range;
   });
 }
 

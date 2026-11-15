@@ -23,6 +23,13 @@ const DEFAULT_STANDING_EYE = 1.6;
 /** Below this the "standing" measurement is someone who has been sitting
  *  or kneeling since the session began, not a real standing height. */
 const MIN_STANDING_EYE = 0.9;
+/** Above this a "standing" measurement is a tracking glitch, or the
+ *  headset held up while putting it on, not anyone's eyes. */
+const MAX_STANDING_EYE = 2.1;
+/** The eyes relative to the top of the neck, which the head pivots on:
+ *  up and forward (-z). Looking down swings the eyes down round it. */
+const EYE_ABOVE_NECK = 0.1;
+const EYE_AHEAD_OF_NECK = 0.08;
 
 /**
  * Samples the local headset and controllers every frame and turns them
@@ -61,14 +68,19 @@ export function XrBodyTracker({ positionRef, rotationRef, onSend }: XrBodyTracke
     if (!presenting || !frame) return;
     if (!readXrBody(gl, frame, sample)) return;
 
+    // How high the eyes would be with the head level: the neck's height,
+    // plus the eyes' height above it. The eyes themselves drop several
+    // centimetres whenever you look down (at your hands, a menu, someone
+    // shorter), and measured from them, every glance down was a crouch.
+    const level = levelEyeHeight(sample);
     // Standing eye height, measured rather than asked for: the highest the
     // head has been this session. Bending to pick something up then reads
     // as bending, and a tall player and a short one both read as standing
     // when they stand.
-    standingEyeRef.current = Math.max(standingEyeRef.current, sample.head.heightAboveFloor);
+    if (level <= MAX_STANDING_EYE) standingEyeRef.current = Math.max(standingEyeRef.current, level);
     const standingEye = standingEyeRef.current >= MIN_STANDING_EYE ? standingEyeRef.current : DEFAULT_STANDING_EYE;
 
-    const pose = encodePose(sample, positionRef.current, rotationRef.current, standingEye);
+    const pose = encodePose(sample, positionRef.current, rotationRef.current, standingEye, level);
     trackingStore.set(LOCAL_TRACKING_SOURCE, pose);
     trackingStore.setLocalWorld(sample, standingEye);
     trackingRef.current = true;
@@ -106,17 +118,29 @@ function toBodyHand(hand: XrHandSample, feet: [number, number, number], scale: n
   return { pose: toBodyPoint(hand.position, hand.quaternion, feet, scale), curl: [hand.curl[0], hand.curl[1]] };
 }
 
+const eyeFromNeck = new THREE.Vector3();
+
+/** The head's height above the floor as if it were level: the neck pivot
+ *  (the eyes, less their offset turned by the head's pitch and roll) plus
+ *  the eyes' height above it. The origin only ever turns about the
+ *  vertical, so the world rotation's vertical part is the playspace's. */
+function levelEyeHeight(sample: ReturnType<typeof createXrBodySample>): number {
+  eyeFromNeck.set(0, EYE_ABOVE_NECK, -EYE_AHEAD_OF_NECK).applyQuaternion(sample.head.quaternion);
+  return sample.head.heightAboveFloor - eyeFromNeck.y + EYE_ABOVE_NECK;
+}
+
 function encodePose(
   sample: ReturnType<typeof createXrBodySample>,
   feet: [number, number, number],
   bodyYaw: number,
-  standingEye: number
+  standingEye: number,
+  levelEye: number
 ): TrackedPose {
   bodyInverse.setFromAxisAngle(yAxis, -bodyYaw);
   return {
     head: toBodyPoint(sample.head.position, sample.head.quaternion, feet, standingEye),
     left: toBodyHand(sample.left, feet, standingEye),
     right: toBodyHand(sample.right, feet, standingEye),
-    height: THREE.MathUtils.clamp(sample.head.heightAboveFloor / standingEye, 0.3, 1.1),
+    height: THREE.MathUtils.clamp(levelEye / standingEye, 0.3, 1.1),
   };
 }

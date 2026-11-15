@@ -12,6 +12,10 @@ import { VideoPanel } from "../media/VideoPanel";
 import { createScreenPlaceholder, createTextTexture } from "./textTexture";
 import { setGizmoDragging } from "./gizmoState";
 import { lightZoneAt, nightNeed, roomLights, signWashTexture } from "../scene/roomLights";
+import { viewerPosition } from "../xr/viewer";
+
+/** The viewer's eyes in the world (see viewerPosition). */
+const scratchEye = new THREE.Vector3();
 
 interface WorldObjectsProps {
   objects: Record<string, WorldObject>;
@@ -516,7 +520,7 @@ function VideoObject({ object }: { object: WorldObject }) {
     elapsed.current += delta;
     if (elapsed.current < 0.25) return;
     elapsed.current = 0;
-    const near = state.camera.position.distanceTo(mesh.getWorldPosition(scratchPosition)) <= VIDEO_DISTANCE;
+    const near = viewerPosition(state.camera, scratchEye).distanceTo(mesh.getWorldPosition(scratchPosition)) <= VIDEO_DISTANCE;
     mesh.visible = near && !failed;
     if (near && !playing.current) {
       playing.current = true;

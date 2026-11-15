@@ -78,6 +78,12 @@ const NECK_SHARE = 0.4;
 /** Furthest the hips may drop for a physical crouch, as a fraction of eye
  *  height. Past this the knee bend needed is not one a leg can make. */
 const MAX_HIP_DROP = 0.45;
+/** A lower head than this, as a fraction of standing eye height, is still
+ *  standing: a relaxed posture, a slouch, or tracking settling. A real
+ *  crouch is far deeper, and without this the knees were always a little
+ *  bent. Applied here, where the pose is drawn, so poses from any client
+ *  get it. */
+const CROUCH_DEAD_ZONE = 0.08;
 
 const FINGERS: { name: string; curl: 0 | 1 }[] = [
   { name: "Index", curl: 0 },
@@ -428,7 +434,7 @@ export function applyTrackedPose(rig: BodyRig, overlay: PoseOverlay, pose: Track
 
   // ---- hips: a physical crouch ------------------------------------------
   // Done first, because everything above the hips moves with them.
-  const drop = Math.min(MAX_HIP_DROP, Math.max(0, 1 - pose.height)) * eye * weights.legs;
+  const drop = Math.min(MAX_HIP_DROP, Math.max(0, 1 - pose.height - CROUCH_DEAD_ZONE)) * eye * weights.legs;
   if (drop > 0.005 && rig.legs.left && rig.legs.right) {
     for (const side of SIDES) {
       const foot = rig.legs[side]!.foot;

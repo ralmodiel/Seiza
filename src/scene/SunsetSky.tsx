@@ -3,6 +3,7 @@ import { useFrame, useLoader } from "@react-three/fiber";
 import { TextureLoader } from "three";
 import * as THREE from "three";
 import { skyState } from "../sky/skyState";
+import { viewerPosition } from "../xr/viewer";
 
 /**
  * The built-in sky: a single moment of twilight, held still.
@@ -336,7 +337,7 @@ export function SunsetSky({ sunPosition, dynamic = false, radius = 200, vibrance
     const u = material.uniforms;
     u.uTime.value = (u.uTime.value + delta) % 3600;
     u.uVibrance.value = vibrance;
-    dome.current?.position.copy(camera.position);
+    if (dome.current) viewerPosition(camera, dome.current.position);
     if (dynamic && skyState.active) {
       u.uSunDirection.value.copy(skyState.sunDirection);
       u.uDayZenith.value.copy(skyState.dayZenith);
@@ -371,7 +372,9 @@ export function ImageSkybox({ url, radius = 200 }: { url: string; radius?: numbe
   texture.needsUpdate = true;
   // Follows the camera, like SunsetSky, so you can't walk out of it.
   const dome = useRef<THREE.Mesh>(null);
-  useFrame(({ camera }) => dome.current?.position.copy(camera.position));
+  useFrame(({ camera }) => {
+    if (dome.current) viewerPosition(camera, dome.current.position);
+  });
   return (
     <mesh ref={dome} scale={[-1, 1, 1]} renderOrder={-1000} frustumCulled={false} userData={{ navIgnore: true }}>
       <sphereGeometry args={[radius, 48, 32]} />

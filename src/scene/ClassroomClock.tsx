@@ -3,6 +3,10 @@ import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import type { WorldMaterials } from "./materials";
 import { playClockTick } from "../audio/sfx";
+import { viewerPosition } from "../xr/viewer";
+
+/** The viewer's eyes in the world (see viewerPosition). */
+const scratchEye = new THREE.Vector3();
 
 /**
  * A working wall clock and a tear-off date calendar for the classroom.
@@ -120,7 +124,7 @@ export function WallClock({
     // than a second actually passing.
     if (previousSecond >= 0 && rootRef.current) {
       const here = rootRef.current.getWorldPosition(tickWorldPosition);
-      playClockTick(lastSecond.current % 2 === 0, frameState.camera.position.distanceTo(here));
+      playClockTick(lastSecond.current % 2 === 0, viewerPosition(frameState.camera, scratchEye).distanceTo(here));
     }
     const t = timeIn(formatter, now);
     const seconds = t.s;

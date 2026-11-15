@@ -5,6 +5,10 @@ import { POND_CENTER, POND_RADIUS, POND_ROCKS, POND_WATER_RADIUS, POND_WATER_Y, 
 import { pondWaders, takePondRipples } from "./pondActivity";
 import { setPondAmbience } from "../audio/sfx";
 import { PooledLight } from "./LightPool";
+import { viewerPosition } from "../xr/viewer";
+
+/** The viewer's eyes in the world (see viewerPosition). */
+const scratchEye = new THREE.Vector3();
 
 /**
  * The garden pond: a sunken basin you can wade into, rocks round the rim,
@@ -359,9 +363,8 @@ export function Pond({ lit = true }: { lit?: boolean }) {
 
     // Continuous trickle, loudest at the water's edge. Driven every
     // frame because it is a gain on a running loop, not a new sound.
-    setPondAmbience(
-      Math.hypot(frameState.camera.position.x - POND_CENTER[0], frameState.camera.position.z - POND_CENTER[1])
-    );
+    const eye = viewerPosition(frameState.camera, scratchEye);
+    setPondAmbience(Math.hypot(eye.x - POND_CENTER[0], eye.z - POND_CENTER[1]));
 
     for (const [x, z, strength] of takePondRipples()) addRipple(x, z, strength);
     const waders = pondWaders();

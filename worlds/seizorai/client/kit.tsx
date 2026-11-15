@@ -9,6 +9,10 @@ import type { LightZone } from "../../../src/multiplayer/types";
 import { nightNeed as darkness, signWashTexture } from "../../../src/scene/roomLights";
 import { live } from "./live";
 import { drawWrapped } from "../../../src/ui/wrapLines";
+import { viewerPosition } from "../../../src/xr/viewer";
+
+/** The viewer's eyes in the world (see viewerPosition). */
+const scratchEye = new THREE.Vector3();
 
 // --- live canvas displays --------------------------------------------------------------
 
@@ -53,7 +57,7 @@ export function useCanvasTexture(
     since.current += delta;
     if (since.current < 1 / hz) return;
     since.current = 0;
-    if (anchor?.current && anchor.current.getWorldPosition(scratch).distanceTo(camera.position) > range) return;
+    if (anchor?.current && anchor.current.getWorldPosition(scratch).distanceTo(viewerPosition(camera, scratchEye)) > range) return;
     redraw();
   });
   return texture;

@@ -13,6 +13,9 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { skyState } from "../sky/skyState";
 import { sheltered } from "./layout";
+import { viewerPosition } from "../xr/viewer";
+
+const scratchEye = new THREE.Vector3();
 
 /** Most streaks at once, for a typhoon's downpour. */
 const MAX_DROPS = 1400;
@@ -59,7 +62,8 @@ export function Rain() {
     const wind = skyState.weatherState?.windSpeed() ?? 0;
     // Slant: metres sideways per metre fallen, from the wind (toward +X).
     const slant = Math.min(0.9, wind * 0.03);
-    const cx = camera.position.x, cy = camera.position.y, cz = camera.position.z;
+    const eye = viewerPosition(camera, scratchEye);
+    const cx = eye.x, cy = eye.y, cz = eye.z;
     const position = geometry.getAttribute("position") as THREE.BufferAttribute;
     const p = position.array as Float32Array;
     const respawn = (i: number, high: boolean) => {

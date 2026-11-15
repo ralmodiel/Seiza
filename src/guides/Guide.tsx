@@ -32,6 +32,10 @@ import { GuideXr } from "./GuideXr";
 import { measure, pointAlong, Route, type Point, type RoutePosition, type Stop } from "./route";
 import { guideSays, openGuide, stopLeading, useGuides } from "./store";
 import { L, useLang } from "../i18n/lang";
+import { viewerPosition } from "../xr/viewer";
+
+/** The viewer's eyes in the world (see viewerPosition). */
+const scratchEye = new THREE.Vector3();
 
 export interface GuideProps {
   id: string;
@@ -190,7 +194,8 @@ export function Guide({ id, name, avatarUrl, stops, speed = 1, pathsOnPatrol = f
     // Talking and not walking anywhere: come and stand beside the visitor,
     // and follow if they wander off.
     if (talking && !walk.current && toVisitor > 3.2) {
-      const side = new THREE.Vector2(camera.position.x - sx, camera.position.z - sz);
+      const eye = viewerPosition(camera, scratchEye);
+      const side = new THREE.Vector2(eye.x - sx, eye.z - sz);
       if (side.lengthSq() < 0.01) side.set(1, 0);
       side.normalize();
       const spot: Point = [sx - side.y * 1.3, sy, sz + side.x * 1.3];
@@ -246,7 +251,8 @@ export function Guide({ id, name, avatarUrl, stops, speed = 1, pathsOnPatrol = f
     d = Math.atan2(Math.sin(d), Math.cos(d));
     yaw.current += d * (1 - Math.exp(-dt * 5));
     g.rotation.y = yaw.current;
-    far.current = Math.hypot(camera.position.x - pos.x, camera.position.z - pos.z) > 15;
+    const eye = viewerPosition(camera, scratchEye);
+    far.current = Math.hypot(eye.x - pos.x, eye.z - pos.z) > 15;
     if (tag.current) tag.current.visible = near && !talking;
   });
 
