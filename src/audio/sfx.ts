@@ -511,3 +511,106 @@ export function playFireToggle(on: boolean, distance?: number) {
     noiseBurst(a.ctx, a.out, { duration: 0.9, gain: 0.12 * level, frequency: 2400, q: 0.45, sweepTo: 800, attack: 0.18 });
   }
 }
+
+/**
+ * Rain, heard all round: a hiss of drops near you over a low wash of rain
+ * further off, from one noise loop through two filters. Indoors the hiss
+ * drops away and the wash goes dull, rain on the roof and the windows. A
+ * typhoon adds wind, a band of noise that rises and falls with its gusts.
+ * Call every frame with the rain (0 to 1), the wind in m/s, and whether
+ * the listener is under cover. Nothing is built until it first rains.
+ */
+let rainBed: {
+  hiss: GainNode;
+  wash: GainNode;
+  washFilter: BiquadFilterNode;
+  wind: GainNode;
+  windFilter: BiquadFilterNode;
+} | null = null;
+
+export function setRainAmbience(rain: number, wind: number, indoors: boolean) {
+  const a = audio();
+  if (!a) return;
+  const level = Math.min(1, Math.max(0, (rain - 0.04) / 0.96));
+  if (!rainBed) {
+    if (level <= 0) return;
+    const frames = a.ctx.sampleRate * 3;
+    const buffer = a.ctx.createBuffer(1, frames, a.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
+    const source = a.ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+
+    const high = a.ctx.createBiquadFilter();
+    high.type = "highpass";
+    high.frequency.value = 1800;
+    const hiss = a.ctx.createGain();
+    hiss.gain.value = 0;
+    source.connect(high).connect(hiss).connect(a.out);
+
+    const washFilter = a.ctx.createBiquadFilter();
+    washFilter.type = "lowpass";
+    washFilter.frequency.value = 900;
+    const wash = a.ctx.createGain();
+    wash.gain.value = 0;
+    source.connect(washFilter).connect(wash).connect(a.out);
+
+    // Wind: a narrow band that wanders, so it moans rather than hisses.
+    const windFilter = a.ctx.createBiquadFilter();
+    windFilter.type = "bandpass";
+    windFilter.frequency.value = 380;
+    windFilter.Q.value = 2.2;
+    const lfo = a.ctx.createOscillator();
+    lfo.frequency.value = 0.11;
+    const lfoDepth = a.ctx.createGain();
+    lfoDepth.gain.value = 160;
+    lfo.connect(lfoDepth).connect(windFilter.frequency);
+    lfo.start();
+    const windGain = a.ctx.createGain();
+    windGain.gain.value = 0;
+    source.connect(windFilter).connect(windGain).connect(a.out);
+
+    source.start();
+    rainBed = { hiss, wash, washFilter, wind: windGain, windFilter };
+  }
+  const t = a.ctx.currentTime;
+  const loud = Math.sqrt(level);
+  rainBed.hiss.gain.setTargetAtTime(indoors ? 0.004 * loud : 0.05 * loud, t, 0.4);
+  rainBed.wash.gain.setTargetAtTime((indoors ? 0.05 : 0.07) * loud, t, 0.4);
+  rainBed.washFilter.frequency.setTargetAtTime(indoors ? 320 : 900, t, 0.4);
+  const gusty = Math.min(1, Math.max(0, (wind - 12) / 18));
+  rainBed.wind.gain.setTargetAtTime(gusty * (indoors ? 0.03 : 0.09), t, 0.6);
+}
+
+/**
+ * Thunder from a strike `distance` metres off: from close by, a sharp
+ * crack and then the roll; from far off, only a low, long rumble. Indoors
+ * it's duller. Played when the sound arrives, not with the flash.
+ */
+export function playThunder(distance: number, indoors: boolean) {
+  const a = audio();
+  if (!a) return;
+  const near = Math.max(0, 1 - distance / 2600);
+  const level = (0.12 + 0.3 * near) * (indoors ? 0.7 : 1);
+  if (near > 0.55 && !indoors) {
+    noiseBurst(a.ctx, a.out, { duration: 0.25, gain: 0.22 * near, type: "highpass", frequency: 900, q: 0.5, sweepTo: 300 });
+  }
+  const length = 2.2 + (1 - near) * 2;
+  noiseBurst(a.ctx, a.out, {
+    duration: length,
+    gain: level,
+    type: "lowpass",
+    frequency: (indoors ? 220 : 420) + near * 300,
+    q: 0.7,
+    sweepTo: 70,
+    attack: 0.08 + (1 - near) * 0.25,
+  });
+  // The roll: a second, later swell, as the sound from the far end of the
+  // bolt arrives.
+  window.setTimeout(() => {
+    const b = audio();
+    if (!b) return;
+    noiseBurst(b.ctx, b.out, { duration: length * 0.8, gain: level * 0.6, type: "lowpass", frequency: 180, q: 0.8, sweepTo: 60, attack: 0.3 });
+  }, 500 + Math.random() * 600);
+}

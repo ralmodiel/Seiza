@@ -60,6 +60,12 @@ const OVERCAST_SKY = new THREE.Color("#c9ced6");
  * and fog from it each frame. Renders the lights itself so a fixed-sky
  * world keeps Scene.tsx's original ones untouched.
  */
+/** A lightning flash on the lights (skyState.flashLight): its colour, and
+ *  how much it adds to the sky's and the room's light at full strength. */
+const LIGHTNING = new THREE.Color("#dfe8ff");
+const LIGHTNING_HEMI = 1.8;
+const LIGHTNING_AMBIENT = 0.5;
+
 export function SkyDriver({ config, room = null }: { config: SkyConfig; room?: RoomSky | null }) {
   // A new room sky restarts the clock, so a change shows straight away.
   const clock = useMemo(() => new SkyClock(config, room), [config, room]);
@@ -104,11 +110,17 @@ export function SkyDriver({ config, room = null }: { config: SkyConfig; room?: R
         .lerp(NIGHT.moonSky, moonlight * 0.6);
       h.groundColor.copy(SUNSET.hemiGround).lerp(DAY.hemiGround, dayness).lerp(NIGHT.hemiGround, night);
       h.intensity = (THREE.MathUtils.lerp(THREE.MathUtils.lerp(SUNSET.hemi, DAY.hemi, dayness), NIGHT.hemi, night) + NIGHT.moonHemi * moonlight) * lit;
+      // Lightning: the whole sky lights up, cold and white, for a moment.
+      if (skyState.flashLight > 0) {
+        h.color.lerp(LIGHTNING, Math.min(1, skyState.flashLight));
+        h.intensity += LIGHTNING_HEMI * skyState.flashLight;
+      }
     }
     if (ambient.current) {
       const a = ambient.current;
       a.color.copy(SUNSET.ambientColor).lerp(DAY.ambientColor, dayness).lerp(NIGHT.ambientColor, night);
       a.intensity = THREE.MathUtils.lerp(THREE.MathUtils.lerp(SUNSET.ambient, DAY.ambient, dayness), NIGHT.ambient, night) + NIGHT.moonAmbient * moonlight;
+      a.intensity += LIGHTNING_AMBIENT * skyState.flashLight;
     }
     if (sun.current) {
       const s = sun.current;

@@ -93,6 +93,10 @@ const fragmentShader = /* glsl */ `
   uniform float uMoonVisible;
   uniform float uMoonIllumination;
   uniform vec3 uMoonColor;
+  // Clouds you can see (uCloud above a wisp), drifting with the wind, and
+  // lightning lighting them up from inside.
+  uniform vec2 uCloudDrift;
+  uniform float uFlash;
   varying vec3 vDirection;
 
   // The moon's angular radius, as a sine. Drawn about four times the real
@@ -106,6 +110,20 @@ const fragmentShader = /* glsl */ `
     p = fract(p * 0.3183099 + vec3(0.71, 0.113, 0.419));
     p *= 17.0;
     return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+  }
+
+  // Value noise for the clouds: hashed corners, smoothly blended. No
+  // texture, so nothing to download, and the same clouds on every client.
+  float hash12(vec2 p) {
+    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+  }
+  float valueNoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash12(i), hash12(i + vec2(1.0, 0.0)), u.x), mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), u.x), u.y);
   }
 
   /**
@@ -253,6 +271,34 @@ const fragmentShader = /* glsl */ `
       }
     }
 
+    // --- clouds ----------------------------------------------------------
+    // A layer overhead: the view direction projected onto a flat ceiling,
+    // so clouds shrink and crowd toward the horizon as real ones do, and
+    // fade out before it, where they'd only shimmer. Three octaves of noise,
+    // and more of it counts as cloud the cloudier the weather: wisps on a
+    // clear day, broken cloud when partly cloudy, a lid when overcast. Lit
+    // white by day, warm at sunset, dark at night with a moonlit sheen, and
+    // from inside by lightning. Skipped below a wisp, where there's none.
+    if (uCloud > 0.1 && h > 0.0) {
+      vec2 q = d.xz / (h + 0.15) * 0.9 + uCloudDrift;
+      float n = valueNoise(q) * 0.55 + valueNoise(q * 2.03 + 7.1) * 0.3 + valueNoise(q * 4.11 + 3.7) * 0.15;
+      // Toward the horizon the clouds are too small to draw without
+      // shimmering, so the noise eases to its average: broken cloud thins
+      // away there, and an overcast lid stays a lid down to the treeline.
+      n = mix(0.5, n, smoothstep(0.0, 0.15, h));
+      float edge = mix(0.78, 0.25, uCloud);
+      float density = smoothstep(edge, edge + 0.22, n);
+      vec3 dayCloud = mix(vec3(0.95, 0.96, 1.0), vec3(0.42, 0.44, 0.48), smoothstep(0.5, 1.0, uCloud)) * mix(1.0, 0.78, density);
+      vec3 duskCloud = mix(uMid * 0.8, uGlow, pow(toward, 3.0));
+      vec3 cloud = mix(duskCloud, dayCloud, uDayness);
+      vec3 nightCloud = vec3(0.03, 0.035, 0.055) + uMoonColor * 0.07 * uMoonIllumination * (1.0 - density);
+      cloud = mix(cloud, nightCloud, nightAmount);
+      sky = mix(sky, cloud, density * 0.92);
+      sky += vec3(0.75, 0.8, 1.0) * uFlash * (0.15 + 0.85 * density);
+    } else {
+      sky += vec3(0.75, 0.8, 1.0) * uFlash * 0.15;
+    }
+
     // Cloud over the painted sunset and the night: greyer and dimmer. By
     // day the engine's colours are already greyed for cloud.
     float lum = dot(sky, vec3(0.299, 0.587, 0.114));
@@ -320,6 +366,8 @@ export function SunsetSky({ sunPosition, dynamic = false, radius = 200, vibrance
           uMoonVisible: { value: 0 },
           uMoonIllumination: { value: 0 },
           uMoonColor: { value: new THREE.Color(MOON) },
+          uCloudDrift: { value: new THREE.Vector2() },
+          uFlash: { value: 0 },
         },
         side: THREE.BackSide,
         // Drawn first and never occludes anything: it's the backdrop.
@@ -349,6 +397,12 @@ export function SunsetSky({ sunPosition, dynamic = false, radius = 200, vibrance
       u.uMoonDirection.value.copy(skyState.moonDirection);
       u.uMoonVisible.value = skyState.moonVisible;
       u.uMoonIllumination.value = skyState.moonIllumination;
+      // Clouds drift downwind (toward +X, like the rain's slant), wrapped
+      // so the noise's input stays small on a phone's GPU.
+      const wind = skyState.weatherState?.windSpeed() ?? 0;
+      const drift = u.uCloudDrift.value as THREE.Vector2;
+      drift.x = (drift.x - delta * (0.004 + wind * 0.0015)) % 256;
+      u.uFlash.value = skyState.flash;
     }
   });
 

@@ -74,6 +74,11 @@ export const skyState = {
   /** The live weather the sky is drawn from (wind, humidity, and all), so
    *  a world's own simulation reads exactly what the sky shows. */
   weatherState: null as WeatherState | null,
+  /** A lightning flash on the sky, 0 to 1 (src/sky/lightning.ts), and the
+   *  same on the lights, less under cover, where it only comes in at the
+   *  windows. Written by Rain each frame. */
+  flash: 0,
+  flashLight: 0,
   /** Simulated Philippine time, for anything that wants to show it. */
   dayOfYear: 1,
   hour: 18,
