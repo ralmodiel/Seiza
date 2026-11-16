@@ -31,6 +31,8 @@ export interface XrHudModel {
   crouch: { active: boolean; start: () => void; end: () => void } | null;
   /** Shown only while seated or kneeling. */
   standUp: (() => void) | null;
+  /** The comfort vignette (src/xr/ComfortVignette.tsx), on or off. */
+  comfort?: { active: boolean; toggle: () => void } | null;
   chat: { id: string; name: string; text: string }[];
   onExit: () => void;
   /** Someone's request for a together gesture ("Bea would like a hug"),
@@ -240,6 +242,9 @@ export function layoutHud(model: XrHudModel): HudLayout {
   }
   if (model.standUp) {
     rowItems.push({ id: "stand", label: L("Stand up", "立つ"), hold: false, active: false, disabled: false, onPress: model.standUp });
+  }
+  if (model.comfort) {
+    rowItems.push({ id: "comfort", label: L("Comfort", "酔い防止"), hold: false, active: model.comfort.active, disabled: false, onPress: model.comfort.toggle });
   }
   if (rowItems.length) {
     const w = (inner - GAP * (rowItems.length - 1)) / rowItems.length;

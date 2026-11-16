@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import type { RoomSky } from "../multiplayer/types";
 import { atPhilippineHour, roomSkyNow, roomSkyWeather } from "./roomSky";
+import { activeSeason, SEASONS, type Season } from "./seasons";
 import {
   moonPhase,
   moonPosition,
@@ -37,6 +38,9 @@ export interface SkyConfig {
    *  brighter blue, a richer sunset. The sky dome only; the light it casts
    *  is unchanged. */
   vibrance?: number;
+  /** Dress the outdoors by the season (src/sky/seasons.ts). Decoration
+   *  only: the weather and light still follow the Philippines. */
+  seasons?: boolean;
 }
 
 /**
@@ -79,6 +83,8 @@ export const skyState = {
    *  windows. Written by Rain each frame. */
   flash: 0,
   flashLight: 0,
+  /** The season the outdoors is dressed for, or null for none. */
+  season: null as Season | null,
   /** Simulated Philippine time, for anything that wants to show it. */
   dayOfYear: 1,
   hour: 18,
@@ -96,12 +102,13 @@ const smoothstep = (a: number, b: number, x: number) => {
 /** Reads ?skyHour=, ?skyDate=, ?skyWeather=, and ?skyScale= from the page
  *  URL, for previewing a time, a moon, or weather without changing
  *  world.json. */
-function urlOverrides(): { hour?: number; date?: number; weather?: WeatherType; scale?: number } {
+function urlOverrides(): { hour?: number; date?: number; weather?: WeatherType; scale?: number; season?: Season } {
   if (typeof window === "undefined") return {};
   const q = new URLSearchParams(window.location.search);
   const hour = Number(q.get("skyHour"));
   const weather = q.get("skyWeather") as WeatherType | null;
   const scale = Number(q.get("skyScale"));
+  const season = q.get("skySeason") as Season | null;
   // A day (YYYY-MM-DD), at noon in the Philippines (UTC+8).
   const date = Date.parse(`${q.get("skyDate")}T12:00:00+08:00`);
   return {
@@ -109,6 +116,7 @@ function urlOverrides(): { hour?: number; date?: number; weather?: WeatherType; 
     date: q.has("skyDate") && Number.isFinite(date) ? date : undefined,
     weather: weather && weather in WEATHER ? weather : undefined,
     scale: Number.isFinite(scale) && scale > 0 ? scale : undefined,
+    season: season && (SEASONS as readonly string[]).includes(season) ? season : undefined,
   };
 }
 
@@ -142,6 +150,10 @@ export class SkyClock {
   private readonly fixedWeather: WeatherType | null;
   /** The room sky driving the time, unless a URL preview hour overrides it. */
   private readonly room: RoomSky | null;
+  /** The room sky as set, for its season even while a preview drives the time. */
+  private readonly roomSettings: RoomSky | null;
+  /** A ?skySeason= preview, which wins over everything. */
+  private readonly previewSeason: Season | undefined;
 
   constructor(private readonly config: SkyConfig, room: RoomSky | null = null) {
     const o = urlOverrides();
@@ -157,6 +169,8 @@ export class SkyClock {
     // with Seizora's control room.
     const previewing = o.hour !== undefined || o.date !== undefined;
     this.room = previewing ? null : room;
+    this.roomSettings = room;
+    this.previewSeason = o.season;
     this.startReal = now;
     const day = o.date ?? now;
     this.startSim = o.hour !== undefined ? atPhilippineHour(day, o.hour) : day;
@@ -223,5 +237,6 @@ export class SkyClock {
     skyState.weatherState = this.weather;
     skyState.dayOfYear = dayOfYear;
     skyState.hour = hour;
+    skyState.season = this.previewSeason ?? activeSeason(this.config.seasons === true, this.roomSettings, date);
   }
 }

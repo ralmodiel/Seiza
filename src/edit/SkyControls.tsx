@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ROOM_SKY_SCALES, ROOM_SKY_WEATHER, type RoomSky, type RoomSkyWeather } from "../multiplayer/types";
+import { ROOM_SKY_SCALES, ROOM_SKY_SEASONS, ROOM_SKY_WEATHER, type RoomSky, type RoomSkySeason, type RoomSkyWeather } from "../multiplayer/types";
 import { roomSkyNow } from "../sky/roomSky";
 import type { SkyConfig } from "../sky/skyState";
 import { philippineTime, WEATHER } from "../sky/weather";
@@ -37,6 +37,19 @@ function weatherLabel(weather: RoomSkyWeather): string {
   return weather === "auto" ? L("Auto (shared schedule)", "自動(共通スケジュール)") : L(WEATHER[weather].label, WEATHER[weather].labelJa);
 }
 
+const SEASON_LABELS: Record<Exclude<RoomSkySeason, "auto">, [string, string]> = {
+  off: ["None", "なし"],
+  spring: ["Spring (sakura)", "春(桜)"],
+  summer: ["Summer (cicadas)", "夏(セミ)"],
+  autumn: ["Autumn (red leaves)", "秋(紅葉)"],
+  winter: ["Winter (snow)", "冬(雪)"],
+};
+
+function seasonLabel(season: RoomSkySeason, worldSeasons: boolean): string {
+  if (season !== "auto") return L(...SEASON_LABELS[season]);
+  return worldSeasons ? L("Auto (by the date)", "自動(日付で)") : L("World default (none)", "ワールドの標準(なし)");
+}
+
 interface SkyControlsProps {
   worldSky?: SkyConfig;
   roomSky: RoomSky | null;
@@ -59,6 +72,7 @@ export function SkyControls({ worldSky, roomSky, onSetRoomSky, connected, skybox
   const mode: "fixed" | "running" = roomSky?.mode === "running" ? "running" : "fixed";
   const scale = roomSky?.scale ?? 60;
   const weather: RoomSkyWeather = roomSky?.weather ?? worldSky?.weather ?? "auto";
+  const season: RoomSkySeason = roomSky?.season ?? "auto";
   const stillSunset = !roomSky && worldSky?.cycle !== "realtime";
 
   // The slider moves locally while dragged and is sent when it rests.
@@ -97,7 +111,7 @@ export function SkyControls({ worldSky, roomSky, onSetRoomSky, connected, skybox
   const currentHour = () => (roomSky?.mode === "running" ? runningHour(roomSky) : draftHour);
 
   const send = (next: Partial<RoomSky>) => {
-    const sky: RoomSky = { mode: synced ? "realtime" : mode, hour: currentHour(), scale, weather, ...next };
+    const sky: RoomSky = { mode: synced ? "realtime" : mode, hour: currentHour(), scale, weather, season, ...next };
     if (sky.mode === "realtime") {
       delete sky.hour;
       delete sky.scale;
@@ -194,6 +208,23 @@ export function SkyControls({ worldSky, roomSky, onSetRoomSky, connected, skybox
           {ROOM_SKY_WEATHER.map((option) => (
             <option key={option} value={option} style={{ color: "black" }}>
               {weatherLabel(option)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <span>
+          {L("Season", "季節")} <small style={{ opacity: 0.7 }}>{L("(scenery and sounds only)", "(景色と音のみ)")}</small>
+        </span>
+        <select
+          value={season}
+          disabled={!connected}
+          onChange={(event) => send({ season: event.target.value as RoomSkySeason })}
+          style={{ ...inputStyle, padding: "6px 8px" }}
+        >
+          {ROOM_SKY_SEASONS.map((option) => (
+            <option key={option} value={option} style={{ color: "black" }}>
+              {seasonLabel(option, worldSky?.seasons === true)}
             </option>
           ))}
         </select>

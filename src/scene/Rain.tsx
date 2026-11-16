@@ -10,6 +10,8 @@
  * flash written to skyState for the sky and the lights to show.
  *
  * And where it lands: tiny splashes twinkling on the ground around you.
+ * In a world dressed for winter (src/sky/seasons.ts), it falls as snow:
+ * slow, drifting flakes, and quiet but for a typhoon's wind.
  *
  * Cheap: one line-segments mesh and one points mesh, their positions
  * updated in place each frame, and nothing at all drawn while it's dry.
@@ -23,6 +25,7 @@ import { flashLevel, strikeAt } from "../sky/lightning";
 import { playThunder, setRainAmbience } from "../audio/sfx";
 import { floorHeightAt, sheltered } from "./layout";
 import { viewerPosition } from "../xr/viewer";
+import { softDotTexture } from "./softDot";
 
 const scratchEye = new THREE.Vector3();
 
@@ -104,30 +107,22 @@ function Splashes({ eye }: { eye: THREE.Vector3 }) {
   }, []);
   // Additive, so a fading splash is a dimming colour: no sorting, no alpha.
   // A tiny soft dot, not the square a bare point draws.
-  const material = useMemo(() => {
-    const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = 16;
-    const g = canvas.getContext("2d")!;
-    const dot = g.createRadialGradient(8, 8, 0, 8, 8, 8);
-    dot.addColorStop(0, "#fff");
-    dot.addColorStop(0.35, "rgba(255,255,255,0.6)");
-    dot.addColorStop(1, "rgba(255,255,255,0)");
-    g.fillStyle = dot;
-    g.fillRect(0, 0, 16, 16);
-    return new THREE.PointsMaterial({
-      size: 0.07,
-      map: new THREE.CanvasTexture(canvas),
-      vertexColors: true,
-      blending: THREE.AdditiveBlending,
-      transparent: true,
-      depthWrite: false,
-      fog: true,
-    });
-  }, []);
+  const material = useMemo(
+    () =>
+      new THREE.PointsMaterial({
+        size: 0.07,
+        map: softDotTexture(),
+        vertexColors: true,
+        blending: THREE.AdditiveBlending,
+        transparent: true,
+        depthWrite: false,
+        fog: true,
+      }),
+    []
+  );
   useEffect(
     () => () => {
       geometry.dispose();
-      material.map?.dispose();
       material.dispose();
       floorCache.clear();
     },
@@ -138,7 +133,7 @@ function Splashes({ eye }: { eye: THREE.Vector3 }) {
     const mesh = points.current;
     if (!mesh) return;
     const rain = skyState.active ? skyState.rain : 0;
-    if (rain < 0.15) {
+    if (rain < 0.15 || skyState.season === "winter") {
       mesh.visible = false;
       return;
     }
@@ -183,6 +178,88 @@ function Splashes({ eye }: { eye: THREE.Vector3 }) {
   return <points ref={points} geometry={geometry} material={material} frustumCulled={false} renderOrder={2} />;
 }
 
+/** Most flakes at once, in a typhoon's blizzard. */
+const MAX_FLAKES = 900;
+/** Metres a second: snow drifts down, it doesn't fall. */
+const FLAKE_FALL = 1.1;
+
+/** Snow, where rain would be: flakes falling slowly round the viewer,
+ *  swaying, carried by the wind, and none under cover. */
+function Snow({ eye }: { eye: THREE.Vector3 }) {
+  const points = useRef<THREE.Points>(null);
+  const flakes = useMemo(
+    () => ({ x: new Float32Array(MAX_FLAKES), y: new Float32Array(MAX_FLAKES), z: new Float32Array(MAX_FLAKES), phase: new Float32Array(MAX_FLAKES), live: new Uint8Array(MAX_FLAKES), time: 0 }),
+    []
+  );
+  const geometry = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(MAX_FLAKES * 3), 3).setUsage(THREE.DynamicDrawUsage));
+    g.setDrawRange(0, 0);
+    return g;
+  }, []);
+  const material = useMemo(
+    () => new THREE.PointsMaterial({ size: 0.11, map: softDotTexture(), color: "#f4f7fb", transparent: true, depthWrite: false, fog: true }),
+    []
+  );
+  useEffect(
+    () => () => {
+      geometry.dispose();
+      material.dispose();
+    },
+    [geometry, material]
+  );
+
+  useFrame((_, delta) => {
+    const mesh = points.current;
+    if (!mesh) return;
+    const rain = skyState.active ? skyState.rain : 0;
+    if (rain < 0.04 || skyState.season !== "winter") {
+      mesh.visible = false;
+      return;
+    }
+    mesh.visible = true;
+    const dt = Math.min(delta, 0.1);
+    flakes.time += dt;
+    const count = Math.round(MAX_FLAKES * Math.min(1, rain));
+    const drift = (skyState.weatherState?.windSpeed() ?? 0) * 0.12;
+    const { x: cx, y: cy, z: cz } = eye;
+    const p = (geometry.getAttribute("position") as THREE.BufferAttribute).array as Float32Array;
+    const respawn = (i: number, high: boolean) => {
+      const a = Math.random() * Math.PI * 2;
+      const r = Math.sqrt(Math.random()) * RADIUS;
+      flakes.x[i] = cx + Math.cos(a) * r;
+      flakes.z[i] = cz + Math.sin(a) * r;
+      flakes.y[i] = high ? cy + TOP : cy - BOTTOM + Math.random() * (TOP + BOTTOM);
+      flakes.phase[i] = Math.random() * Math.PI * 2;
+      flakes.live[i] = 1;
+    };
+    for (let i = 0; i < count; i++) {
+      const far = Math.hypot(flakes.x[i] - cx, flakes.z[i] - cz) > RADIUS + 2;
+      if (flakes.y[i] === 0 && flakes.x[i] === 0) respawn(i, false);
+      else {
+        flakes.y[i] -= FLAKE_FALL * dt;
+        flakes.x[i] += drift * dt;
+        if (flakes.y[i] < cy - BOTTOM || far) respawn(i, !far);
+      }
+      if (flakes.live[i] && shelteredCell(flakes.x[i], cy, flakes.z[i])) flakes.live[i] = 0;
+      const o = i * 3;
+      if (!flakes.live[i]) {
+        p[o] = p[o + 1] = p[o + 2] = 0;
+        continue;
+      }
+      // A slow side-to-side flutter, each flake on its own phase.
+      const sway = Math.sin(flakes.time * 1.3 + flakes.phase[i]) * 0.25;
+      p[o] = flakes.x[i] + sway;
+      p[o + 1] = flakes.y[i];
+      p[o + 2] = flakes.z[i] + Math.cos(flakes.time * 1.1 + flakes.phase[i]) * 0.2;
+    }
+    (geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
+    geometry.setDrawRange(0, count);
+  });
+
+  return <points ref={points} geometry={geometry} material={material} frustumCulled={false} renderOrder={2} />;
+}
+
 export function Rain() {
   const lines = useRef<THREE.LineSegments>(null);
   const drops = useMemo(() => {
@@ -211,11 +288,15 @@ export function Rain() {
   const heard = useRef(-1);
 
   useFrame(({ camera }, delta) => {
-    const rain = skyState.active ? skyState.rain : 0;
+    const precipitation = skyState.active ? skyState.rain : 0;
+    // In winter it snows instead (Snow, above): no rain, rain sound, or
+    // lightning, though a typhoon's wind still blows.
+    const snowing = skyState.season === "winter";
+    const rain = snowing ? 0 : precipitation;
     const wind = skyState.weatherState?.windSpeed() ?? 0;
     const eye = viewerPosition(camera, scratchEye);
     const cx = eye.x, cy = eye.y, cz = eye.z;
-    const indoors = rain > 0.04 && shelteredCell(cx, cy, cz);
+    const indoors = precipitation > 0.04 && shelteredCell(cx, cy, cz);
 
     setRainAmbience(rain, wind, indoors);
     const strike = strikeAt(Date.now(), rain);
@@ -281,6 +362,7 @@ export function Rain() {
     <>
       <lineSegments ref={lines} geometry={geometry} material={material} frustumCulled={false} renderOrder={2} />
       <Splashes eye={scratchEye} />
+      <Snow eye={scratchEye} />
     </>
   );
 }

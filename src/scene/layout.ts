@@ -630,6 +630,8 @@ export const OBSTACLES: Obstacle[] = [
  */
 let activeObstacles: Obstacle[] = OBSTACLES;
 
+export { obstacle as makeObstacle };
+
 export function setActiveObstacles(next: Obstacle[] | null): void {
   activeObstacles = next ?? OBSTACLES;
 }
@@ -644,6 +646,14 @@ let worldObstacles: Obstacle[] = [];
 
 export function setWorldObstacles(next: Obstacle[]): void {
   worldObstacles = next;
+}
+
+/** Scenery that comes and goes with a world's settings, such as the
+ *  seasonal tree (src/scene/Seasons.tsx). Built-in rooms only. */
+let sceneryObstacles: Obstacle[] = [];
+
+export function setSceneryObstacles(next: Obstacle[]): void {
+  sceneryObstacles = next;
 }
 
 /** Furniture people placed in the room (src/edit/WorldObjects.tsx): only
@@ -710,7 +720,10 @@ export function deriveObstaclesFromObject(root: THREE.Object3D): Obstacle[] {
  */
 export function resolveObstacles(position: THREE.Vector3, radius = PLAYER_RADIUS): void {
   // The built-in room's furniture isn't there in a model world.
-  if (!ground) pushOutOf(activeObstacles, position, radius);
+  if (!ground) {
+    pushOutOf(activeObstacles, position, radius);
+    pushOutOf(sceneryObstacles, position, radius);
+  }
   pushOutOf(worldObstacles, position, radius);
   pushOutOf(placedObstacles, position, radius, ground ? undefined : floorHeightAt(position.x, position.z));
 }

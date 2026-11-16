@@ -369,6 +369,10 @@ export const DEFAULT_LIGHTS: Readonly<Record<LightZone, boolean>> = { hall: true
 /** Weather choices for a room sky. "auto" follows the shared schedule. */
 export const ROOM_SKY_WEATHER = ["auto", "clear", "partly", "overcast", "rain", "typhoon"] as const;
 export type RoomSkyWeather = (typeof ROOM_SKY_WEATHER)[number];
+/** A room's season (src/sky/seasons.ts): the calendar's ("auto", in a
+ *  world with seasons), none, or one held. */
+export const ROOM_SKY_SEASONS = ["auto", "off", "spring", "summer", "autumn", "winter"] as const;
+export type RoomSkySeason = (typeof ROOM_SKY_SEASONS)[number];
 
 /** Clock speeds a room sky can run at: real speed, an hour a minute, and
  *  a day in four minutes. */
@@ -392,6 +396,7 @@ export interface RoomSky {
   /** One of ROOM_SKY_SCALES, for "running". */
   scale?: number;
   weather?: RoomSkyWeather;
+  season?: RoomSkySeason;
   /** When a "running" sky was set, in server time (ms since 1970). Set by
    *  the server, so every browser runs the clock from the same moment. */
   setAt?: number;

@@ -11,6 +11,7 @@ import { deriveObstaclesFromObject, OBSTACLES, setActiveObstacles } from "./layo
 import type { Seat } from "./layout";
 import { LightPool } from "./LightPool";
 import { SkyDriver } from "../sky/SkyDriver";
+import { Seasons } from "./Seasons";
 import { Rain } from "./Rain";
 import type { SkyConfig } from "../sky/skyState";
 import type { RoomSky } from "../multiplayer/types";
@@ -266,6 +267,7 @@ export const Scene = memo(function Scene({
         <>
           <SkyDriver config={skyConfig} room={roomSky} />
           <Rain />
+          <Seasons builtin={builtin} />
         </>
       ) : (
         <>

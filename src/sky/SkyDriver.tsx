@@ -65,6 +65,8 @@ const OVERCAST_SKY = new THREE.Color("#c9ced6");
 const LIGHTNING = new THREE.Color("#dfe8ff");
 const LIGHTNING_HEMI = 1.8;
 const LIGHTNING_AMBIENT = 0.5;
+/** A summer sun, in a world dressed for the seasons: a little stronger. */
+const SUMMER_SUN = 1.12;
 
 export function SkyDriver({ config, room = null }: { config: SkyConfig; room?: RoomSky | null }) {
   // A new room sky restarts the clock, so a change shows straight away.
@@ -136,7 +138,7 @@ export function SkyDriver({ config, room = null }: { config: SkyConfig; room?: R
       } else {
         s.position.copy(skyState.sunDirection).multiplyScalar(SUN_DISTANCE);
         s.color.copy(SUNSET.sunColor).lerp(DAY.sunColor, dayness);
-        s.intensity = THREE.MathUtils.lerp(SUNSET.sun, DAY.sun, dayness) * sunVisible * (1 - 2 * night);
+        s.intensity = THREE.MathUtils.lerp(SUNSET.sun, DAY.sun, dayness) * sunVisible * (1 - 2 * night) * (skyState.season === "summer" ? SUMMER_SUN : 1);
       }
     }
 

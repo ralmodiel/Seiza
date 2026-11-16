@@ -86,6 +86,7 @@ function signatureOf(model: XrHudModel): string {
     model.seiza?.active ?? null,
     model.crouch?.active ?? null,
     model.standUp != null,
+    model.comfort?.active ?? null,
     model.chat.map((m) => m.id),
     model.request?.text ?? null,
     model.together ? [model.together.name, model.together.gestures.map((g) => g.name), model.together.waiting] : null,
@@ -131,6 +132,7 @@ function XrHudPanel({ model, session }: { model: XrHudModel; session: XRSession 
       seiza: m.seiza && { active: m.seiza.active, toggle: () => live().seiza?.toggle() },
       crouch: m.crouch && { active: m.crouch.active, start: () => live().crouch?.start(), end: () => live().crouch?.end() },
       standUp: m.standUp && (() => live().standUp?.()),
+      comfort: m.comfort && { active: m.comfort.active, toggle: () => live().comfort?.toggle() },
       onExit: () => live().onExit(),
       together: m.together && { ...m.together, onAsk: (gesture) => live().together?.onAsk(gesture) },
     });

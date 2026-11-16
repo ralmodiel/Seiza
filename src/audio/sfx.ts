@@ -532,8 +532,9 @@ export function setRainAmbience(rain: number, wind: number, indoors: boolean) {
   const a = audio();
   if (!a) return;
   const level = Math.min(1, Math.max(0, (rain - 0.04) / 0.96));
+  const gusty = Math.min(1, Math.max(0, (wind - 12) / 18));
   if (!rainBed) {
-    if (level <= 0) return;
+    if (level <= 0 && gusty <= 0) return;
     const frames = a.ctx.sampleRate * 3;
     const buffer = a.ctx.createBuffer(1, frames, a.ctx.sampleRate);
     const data = buffer.getChannelData(0);
@@ -579,7 +580,6 @@ export function setRainAmbience(rain: number, wind: number, indoors: boolean) {
   rainBed.hiss.gain.setTargetAtTime(indoors ? 0.004 * loud : 0.05 * loud, t, 0.4);
   rainBed.wash.gain.setTargetAtTime((indoors ? 0.05 : 0.07) * loud, t, 0.4);
   rainBed.washFilter.frequency.setTargetAtTime(indoors ? 320 : 900, t, 0.4);
-  const gusty = Math.min(1, Math.max(0, (wind - 12) / 18));
   rainBed.wind.gain.setTargetAtTime(gusty * (indoors ? 0.03 : 0.09), t, 0.6);
 }
 
@@ -613,4 +613,55 @@ export function playThunder(distance: number, indoors: boolean) {
     if (!b) return;
     noiseBurst(b.ctx, b.out, { duration: length * 0.8, gain: level * 0.6, type: "lowpass", frequency: 180, q: 0.8, sweepTo: 60, attack: 0.3 });
   }, 500 + Math.random() * 600);
+}
+
+/**
+ * Cicadas on a summer day: the rising and falling drone of minminzemi,
+ * a band of noise pulsed fast (the buzz) and swelled slowly (each call),
+ * from a little way off in the trees. Call every frame with how loud,
+ * 0 to 1: 0 indoors, at night, in the rain, and outside summer.
+ */
+let cicadas: { gain: GainNode } | null = null;
+
+export function setCicadas(level: number) {
+  const a = audio();
+  if (!a) return;
+  if (!cicadas) {
+    if (level <= 0) return;
+    const frames = a.ctx.sampleRate * 2;
+    const buffer = a.ctx.createBuffer(1, frames, a.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
+    const source = a.ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+    const band = a.ctx.createBiquadFilter();
+    band.type = "bandpass";
+    band.frequency.value = 4600;
+    band.Q.value = 6;
+    // The buzz: the band pulsed about forty times a second.
+    const pulse = a.ctx.createGain();
+    pulse.gain.value = 0.5;
+    const buzz = a.ctx.createOscillator();
+    buzz.frequency.value = 42;
+    const buzzDepth = a.ctx.createGain();
+    buzzDepth.gain.value = 0.5;
+    buzz.connect(buzzDepth).connect(pulse.gain);
+    // Each call swells and fades over a few seconds.
+    const swell = a.ctx.createGain();
+    swell.gain.value = 0.55;
+    const call = a.ctx.createOscillator();
+    call.frequency.value = 0.28;
+    const callDepth = a.ctx.createGain();
+    callDepth.gain.value = 0.45;
+    call.connect(callDepth).connect(swell.gain);
+    const gain = a.ctx.createGain();
+    gain.gain.value = 0;
+    source.connect(band).connect(pulse).connect(swell).connect(gain).connect(a.out);
+    source.start();
+    buzz.start();
+    call.start();
+    cicadas = { gain };
+  }
+  cicadas.gain.gain.setTargetAtTime(0.045 * level, a.ctx.currentTime, 0.8);
 }

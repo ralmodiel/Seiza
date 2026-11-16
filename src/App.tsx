@@ -50,6 +50,7 @@ import { reachScale, setAvatarReach } from "./avatar/avatarReach";
 import { SelfView } from "./xr/body/SelfView";
 import { LOCAL_TRACKING_SOURCE } from "./xr/body/trackingStore";
 import { XrHud, type XrHudModel } from "./xr/hud/XrHud";
+import { ComfortVignette, setComfortVignette, useComfortVignette } from "./xr/ComfortVignette";
 import {
   enduranceExpression,
   enduranceTremble,
@@ -1191,6 +1192,7 @@ export default function App() {
     return () => window.clearInterval(timer);
   }, [togetherOffered]);
   const waitingRequest = together.incoming[0] ?? null;
+  const comfortVignette = useComfortVignette();
 
   if (worldError) return <CenteredMessage text={L(`Couldn't load world: ${worldError.message}`, `ワールドを読み込めませんでした:${worldError.message}`)} />;
   if (!world) return <CenteredMessage text={L("Loading world…", "ワールドを読み込み中…")} />;
@@ -1251,6 +1253,7 @@ export default function App() {
       ? { active: crouching, start: () => requestGesture(crouchGesture.name), end: () => releaseGesture(crouchGesture.name) }
       : null,
     standUp: seat || posture ? standUp : null,
+    comfort: { active: comfortVignette, toggle: () => setComfortVignette(!comfortVignette) },
     chat: messages.slice(-3).map((m) => ({ id: m.id, name: m.senderName, text: m.text })),
     onExit: () => void xrStore.getState().session?.end(),
     request: waitingRequest
@@ -1398,6 +1401,7 @@ export default function App() {
           </PlayerRig>
           <XrBodyTracker positionRef={positionRef} rotationRef={rotationRef} onSend={(pose) => send({ type: "tracking", pose })} />
           <XrHud model={xrHudModel} />
+          <ComfortVignette />
           <RemotePlayers
             players={players}
             selfId={selfId}

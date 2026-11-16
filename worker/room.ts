@@ -15,6 +15,7 @@ import {
   duetPosture,
   type TogetherGesture,
   ROOM_SKY_SCALES,
+  ROOM_SKY_SEASONS,
   ROOM_SKY_WEATHER,
   type PlayerMedia,
   type PlayerMovement,
@@ -1418,11 +1419,13 @@ export function sanitizeRoomSky(raw: unknown, now: number): RoomSky | undefined 
   const mode = input.mode;
   if (mode !== "realtime" && mode !== "fixed" && mode !== "running") return undefined;
   const weather = ROOM_SKY_WEATHER.includes(input.weather as never) ? (input.weather as RoomSky["weather"]) : "auto";
-  if (mode === "realtime") return { mode, weather };
+  // Only a chosen season is kept; "auto" is the same as none set.
+  const season = ROOM_SKY_SEASONS.includes(input.season as never) && input.season !== "auto" ? { season: input.season as RoomSky["season"] } : {};
+  if (mode === "realtime") return { mode, weather, ...season };
   if (typeof input.hour !== "number" || !Number.isFinite(input.hour)) return undefined;
   // Wrapped into a day, to the minute.
   const hour = Math.round((((input.hour % 24) + 24) % 24) * 60) / 60;
-  if (mode === "fixed") return { mode, hour, weather };
+  if (mode === "fixed") return { mode, hour, weather, ...season };
   const scale = ROOM_SKY_SCALES.includes(input.scale as never) ? (input.scale as number) : 1;
-  return { mode, hour, scale, weather, setAt: now };
+  return { mode, hour, scale, weather, ...season, setAt: now };
 }

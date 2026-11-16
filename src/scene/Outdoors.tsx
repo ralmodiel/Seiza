@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { skyState } from "../sky/skyState";
+import type { Season } from "../sky/seasons";
 import { FIELD, POND_CENTER, POND_WATER_RADIUS } from "./layout";
 import { buildMeadowGeometry } from "./meadow";
 
@@ -83,6 +84,89 @@ function makeGroundTexture(): THREE.Texture | null {
   return texture;
 }
 
+/** The ground under snow, painted the same way: white, with grass
+ *  showing through in patches and blue-grey drifts. */
+function makeSnowTexture(): THREE.Texture | null {
+  if (typeof document === "undefined") return null;
+  const size = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  const gradient = ctx.createRadialGradient(size / 2, size / 2, size * 0.08, size / 2, size / 2, size * 0.5);
+  gradient.addColorStop(0, "#eef2f6");
+  gradient.addColorStop(0.6, "#e4eaf1");
+  gradient.addColorStop(1, "#d6dce4");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, size, size);
+  const random = mulberry32(4242);
+  for (let i = 0; i < 220; i++) {
+    ctx.fillStyle = random() > 0.7 ? "rgba(120,132,92,0.22)" : "rgba(176,190,212,0.28)";
+    ctx.beginPath();
+    ctx.arc(random() * size, random() * size, 2 + random() * 11, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+/** How each season tints the grass and hills (multiplied in); winter swaps
+ *  in snow instead. */
+const SEASON_GROUND: Record<Season, THREE.Color> = {
+  spring: new THREE.Color(1.0, 1.05, 0.95),
+  summer: new THREE.Color(0.9, 1.1, 0.82),
+  autumn: new THREE.Color(1.15, 0.92, 0.66),
+  winter: new THREE.Color(1, 1, 1),
+};
+const SEASON_HILLS: Record<Season, THREE.Color> = {
+  spring: new THREE.Color(0.98, 1.05, 0.96),
+  summer: new THREE.Color(0.9, 1.08, 0.86),
+  autumn: new THREE.Color(1.22, 0.86, 0.62),
+  winter: new THREE.Color(1, 1, 1),
+};
+/** In autumn some of the treeline turns (the rest are evergreens), and in
+ *  spring a few trees are in blossom. */
+const AUTUMN_COLORS = ["#b8442a", "#d4732a", "#c99a2e", "#9c3524"].map((c) => new THREE.Color(c));
+const BLOSSOM = new THREE.Color("#f0bccb");
+const SNOW_DUST = new THREE.Color("#dfe6ee");
+/** The treeline material's own colour, which every tree's colour is
+ *  multiplied by: a seasonal colour is divided by it first, so it comes
+ *  out as itself rather than darkened to the pines' green. */
+const TREE_MATERIAL = "#54683a";
+const treeMaterialColor = new THREE.Color(TREE_MATERIAL);
+const treeMaterialInverse = new THREE.Color(1 / treeMaterialColor.r, 1 / treeMaterialColor.g, 1 / treeMaterialColor.b);
+
+/** The treeline's colours for a season, from its own colours. */
+function seasonalTreeColors(base: number[], season: Season | null): Float32Array {
+  const out = new Float32Array(base);
+  if (!season) return out;
+  const random = mulberry32(777);
+  const c = new THREE.Color();
+  const hsl = { h: 0, s: 0, l: 0 };
+  for (let i = 0; i < base.length / 3; i++) {
+    const pick = random();
+    const which = random();
+    c.setRGB(base[i * 3], base[i * 3 + 1], base[i * 3 + 2]);
+    // How light this tree is (0.22 near to 0.4 far): distant ones are
+    // hazier, and keep it.
+    const haze = (c.getHSL(hsl).l - 0.22) / 0.18;
+    const shade = 0.55 + 0.5 * haze;
+    if (season === "summer") c.multiply(SEASON_GROUND.summer);
+    else {
+      let target: THREE.Color | null = null;
+      if (season === "autumn" && pick < 0.35) target = AUTUMN_COLORS[Math.floor(which * AUTUMN_COLORS.length)];
+      else if (season === "spring" && pick < 0.1) target = BLOSSOM;
+      if (target) c.copy(target).multiplyScalar(shade).multiply(treeMaterialInverse);
+      else if (season === "winter") c.multiply(treeMaterialColor).lerp(SNOW_DUST, 0.45).multiply(treeMaterialInverse);
+    }
+    out[i * 3] = c.r;
+    out[i * 3 + 1] = c.g;
+    out[i * 3 + 2] = c.b;
+  }
+  return out;
+}
+
 /** How dark the unlit ground and hills get in full night, and the cool
  *  tint they take on: moonlit rather than black. */
 const NIGHT_BRIGHTNESS = 0.22;
@@ -90,6 +174,9 @@ const NIGHT_TINT = new THREE.Color(0.75, 0.82, 1.0);
 
 export function Outdoors() {
   const ground = useMemo(makeGroundTexture, []);
+  const snow = useMemo(makeSnowTexture, []);
+  const treeMesh = useRef<THREE.InstancedMesh | null>(null);
+  const shownSeason = useRef<Season | null>(null);
   const groundMaterial = useRef<THREE.MeshBasicMaterial>(null);
   const meadowMaterial = useRef<THREE.MeshBasicMaterial>(null);
   const hillMaterial = useRef<THREE.MeshBasicMaterial>(null);
@@ -103,10 +190,27 @@ export function Outdoors() {
     if (!skyState.active) return;
     const k = THREE.MathUtils.lerp(1, NIGHT_BRIGHTNESS, skyState.night) * (1 - 0.25 * skyState.cloud * (1 - skyState.night));
     tint.setRGB(1, 1, 1).lerp(NIGHT_TINT, skyState.night).multiplyScalar(k);
+    const season = skyState.season;
+    const winter = season === "winter" && snow !== null;
     for (const material of [groundMaterial.current, meadowMaterial.current]) {
-      material?.color.set(ground ? "#ffffff" : "#8d9a5c").multiply(tint);
+      if (!material) continue;
+      material.color.set(ground ? "#ffffff" : "#8d9a5c").multiply(tint);
+      if (season) material.color.multiply(SEASON_GROUND[season]);
+      // The same kind of texture either way, so swapping needs no new shader.
+      const map = winter ? snow : ground;
+      if (map && material.map !== map) material.map = map;
     }
-    if (hillMaterial.current) hillMaterial.current.color.set("#6c6b58").multiply(tint);
+    if (hillMaterial.current) {
+      hillMaterial.current.color.set(winter ? "#bcc4ce" : "#6c6b58").multiply(tint);
+      if (season && !winter) hillMaterial.current.color.multiply(SEASON_HILLS[season]);
+    }
+    // The treeline's colours change only when the season does.
+    const mesh = treeMesh.current;
+    if (mesh?.instanceColor && season !== shownSeason.current) {
+      shownSeason.current = season;
+      (mesh.instanceColor.array as Float32Array).set(seasonalTreeColors(treeColors, season));
+      mesh.instanceColor.needsUpdate = true;
+    }
   });
 
   /**
@@ -164,6 +268,7 @@ export function Outdoors() {
   );
   useEffect(() => () => meadowGeometry.dispose(), [meadowGeometry]);
   useEffect(() => () => ground?.dispose(), [ground]);
+  useEffect(() => () => snow?.dispose(), [snow]);
 
   // One instanced draw call for every tree, and another for the hills.
   const { trees, treeColors, hills, treeCount } = useMemo(() => {
@@ -270,12 +375,16 @@ export function Outdoors() {
 
       {/* Treeline. Six-sided cones: from inside a building, that is a tree. */}
       <instancedMesh
-        ref={(mesh) => applyInstances(mesh, trees, treeColors)}
+        ref={(mesh) => {
+          treeMesh.current = mesh;
+          shownSeason.current = null;
+          applyInstances(mesh, trees, treeColors);
+        }}
         args={[undefined, undefined, treeCount]}
         userData={{ navIgnore: true }}
       >
         <coneGeometry args={[1.5, 6, 6, 1]} />
-        <meshLambertMaterial color="#54683a" fog />
+        <meshLambertMaterial color={TREE_MATERIAL} fog />
       </instancedMesh>
     </group>
   );
