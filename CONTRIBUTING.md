@@ -32,6 +32,8 @@ before you start work, not after.
 
 ## Before you open a pull request
 
+- **Read [ARCHITECTURE.md](ARCHITECTURE.md)** for how the code is divided,
+  the rules each part follows, and where to start for common changes.
 - **Open an issue first for large changes**, so that design decisions are
   agreed before review.
 - **Record new assets.** If you add a gesture, avatar, model, or other 3D
