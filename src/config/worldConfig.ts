@@ -26,6 +26,9 @@ export interface WorldConfig {
    * whatever is actually in the scene (src/nav/useNavMesh.ts).
    */
   environmentCollision?: boolean;
+  /** A beach and the sea past the meadow's east side, in place of the
+   *  treeline there (src/scene/Beach.tsx). Built-in grounds only. */
+  beach?: boolean;
   /**
    * What the world is made of. "builtin" (the default): Seiza's own hall,
    * classroom, garden, and meadow, with `sceneUrl` layered over them.

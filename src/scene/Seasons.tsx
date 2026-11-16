@@ -1,12 +1,14 @@
 /**
  * The season's own touches outdoors (src/sky/seasons.ts): a tree in the
  * meadow that blossoms, greens, reddens, and goes bare, with petals or
- * leaves drifting down from it, and cicadas on summer days. The ground and
- * the treeline change colour in Outdoors.tsx, and snow falls in Rain.tsx.
+ * leaves drifting down from it; the same drifting round you wherever you
+ * are outdoors, and fireflies on summer nights; and cicadas on summer
+ * days. The ground and the treeline change colour in Outdoors.tsx, and
+ * snow falls in Rain.tsx.
  *
  * Built-in rooms only, and only while a season is on. Cheap: the tree is
- * two meshes (trunk, canopy), the falling petals one points mesh, and the
- * cicadas a synthesized loop.
+ * two meshes (trunk, canopy), the petals under it and the drift round you
+ * one points mesh each, and the cicadas a synthesized loop.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
@@ -171,6 +173,113 @@ function Falling({ season }: { season: Season }) {
   return <points ref={points} geometry={geometry} material={material} frustumCulled={false} />;
 }
 
+/** How many drift round you, and how far out. */
+const DRIFT_COUNT = 64;
+const DRIFT_RADIUS = 13;
+
+/**
+ * The season in the air wherever you are outdoors, not only under the
+ * tree: cherry petals in spring and leaves in autumn, a few dozen falling
+ * slowly round you and carried by the wind; fireflies blinking low over
+ * the grass on summer nights. One points mesh; none under a roof.
+ */
+function Drift({ season }: { season: Season }) {
+  const points = useRef<THREE.Points>(null);
+  const fireflies = season === "summer";
+  const colors = fireflies ? [new THREE.Color("#d8ff7a")] : FALLING_COLORS[season];
+  const state = useMemo(
+    () => ({
+      x: new Float32Array(DRIFT_COUNT),
+      y: new Float32Array(DRIFT_COUNT),
+      z: new Float32Array(DRIFT_COUNT),
+      phase: new Float32Array(DRIFT_COUNT).map(() => Math.random() * Math.PI * 2),
+      live: new Uint8Array(DRIFT_COUNT),
+      time: 0,
+    }),
+    []
+  );
+  const geometry = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(DRIFT_COUNT * 3), 3).setUsage(THREE.DynamicDrawUsage));
+    g.setAttribute("color", new THREE.BufferAttribute(new Float32Array(DRIFT_COUNT * 3), 3).setUsage(THREE.DynamicDrawUsage));
+    return g;
+  }, []);
+  // Petals and leaves are solid; fireflies glow (additive, so a dim one
+  // is simply a darker colour).
+  const material = useMemo(
+    () =>
+      fireflies
+        ? new THREE.PointsMaterial({ size: 0.07, map: softDotTexture(), vertexColors: true, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, fog: true })
+        : new THREE.PointsMaterial({ size: 0.08, map: softDotTexture(), vertexColors: true, alphaTest: 0.35, fog: true }),
+    [fireflies]
+  );
+  useEffect(
+    () => () => {
+      geometry.dispose();
+      material.dispose();
+    },
+    [geometry, material]
+  );
+
+  useFrame(({ camera }, delta) => {
+    const mesh = points.current;
+    if (!mesh || !colors) return;
+    const showing = fireflies ? skyState.night > 0.5 && skyState.rain < 0.2 : true;
+    mesh.visible = showing;
+    if (!showing) return;
+    const dt = Math.min(delta, 0.1);
+    state.time += dt;
+    const eye = viewerPosition(camera, scratchEye);
+    const drift = (skyState.weatherState?.windSpeed() ?? 0) * 0.06;
+    const p = (geometry.getAttribute("position") as THREE.BufferAttribute).array as Float32Array;
+    const c = (geometry.getAttribute("color") as THREE.BufferAttribute).array as Float32Array;
+    const respawn = (i: number, high: boolean) => {
+      const a = Math.random() * Math.PI * 2;
+      const r = Math.sqrt(Math.random()) * DRIFT_RADIUS;
+      state.x[i] = eye.x + Math.cos(a) * r;
+      state.z[i] = eye.z + Math.sin(a) * r;
+      const floor = floorHeightAt(state.x[i], state.z[i]);
+      state.y[i] = fireflies ? floor + 0.3 + Math.random() * 1.6 : high ? eye.y + 4 + Math.random() * 3 : floor + Math.random() * 7;
+      state.live[i] = sheltered(state.x[i], eye.y, state.z[i]) ? 0 : 1;
+      colors[i % colors.length].toArray(c, i * 3);
+    };
+    for (let i = 0; i < DRIFT_COUNT; i++) {
+      const far = Math.hypot(state.x[i] - eye.x, state.z[i] - eye.z) > DRIFT_RADIUS + 3;
+      if (state.time === dt || far) respawn(i, false);
+      const swing = state.time * (0.8 + 0.4 * Math.sin(state.phase[i])) + state.phase[i];
+      if (fireflies) {
+        // Wandering low, and blinking: a few seconds' slow pulse each.
+        state.x[i] += Math.sin(swing * 0.7) * 0.3 * dt;
+        state.z[i] += Math.cos(swing * 0.6) * 0.3 * dt;
+        state.y[i] += Math.sin(swing * 1.3) * 0.15 * dt;
+        const blink = Math.max(0, Math.sin(state.time * 1.4 + state.phase[i] * 3));
+        const k = state.live[i] ? blink * blink : 0;
+        c[i * 3] = 0.85 * k;
+        c[i * 3 + 1] = 1.0 * k;
+        c[i * 3 + 2] = 0.45 * k;
+      } else {
+        // Fluttering down, swinging side to side, carried downwind.
+        state.y[i] -= (0.45 + 0.3 * Math.sin(state.phase[i] * 2.3)) * dt;
+        state.x[i] += drift * dt;
+        if (state.y[i] < floorHeightAt(state.x[i], state.z[i]) + 0.02) respawn(i, true);
+      }
+      const o = i * 3;
+      if (!state.live[i]) {
+        p[o] = p[o + 1] = p[o + 2] = 0;
+        continue;
+      }
+      p[o] = state.x[i] + (fireflies ? 0 : Math.sin(swing) * 0.4);
+      p[o + 1] = state.y[i];
+      p[o + 2] = state.z[i] + (fireflies ? 0 : Math.cos(swing * 0.8) * 0.3);
+    }
+    geometry.getAttribute("position").needsUpdate = true;
+    geometry.getAttribute("color").needsUpdate = true;
+  });
+
+  if (!colors) return null;
+  return <points ref={points} geometry={geometry} material={material} frustumCulled={false} />;
+}
+
 /** Cicadas by day in summer, outdoors, and not in the rain. Checked a few
  *  times a second; the sound eases itself. */
 function Cicadas() {
@@ -197,6 +306,7 @@ export function Seasons({ builtin }: { builtin: boolean }) {
     <>
       {builtin && <SeasonalTree season={season} />}
       {builtin && (season === "spring" || season === "autumn") && <Falling key={season} season={season} />}
+      {builtin && season !== "winter" && <Drift key={season} season={season} />}
       {season === "summer" && <Cicadas />}
     </>
   );

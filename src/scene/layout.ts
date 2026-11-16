@@ -212,6 +212,46 @@ const WALKABLE: Rect[] = [
   },
 ];
 
+// --- the beach --------------------------------------------------------------
+
+/**
+ * The beach past the meadow's east side, in a world that has one (world.json
+ * `beach`; src/scene/Beach.tsx draws it). Its shape lives here, with the
+ * rest of the grounds, because walking, the grass's edge (Outdoors.tsx), and
+ * the drawing all follow it.
+ */
+export const SHORE = {
+  /** The sea's level. */
+  seaY: -0.22,
+  /** How far down the sand, from its top, the water starts. */
+  toWater: 12,
+};
+
+/** Where the sand starts at `z`: a gently wandering line a little past the
+ *  meadow's east edge. */
+export function coastX(z: number): number {
+  return 34 + 4 * Math.sin(z * 0.021) + 2 * Math.sin(z * 0.057 + 1.3);
+}
+
+/** The sand's height `d` metres seaward from its top: a gentle slope to the
+ *  water, then on down under it. */
+export function shoreY(d: number): number {
+  return d <= SHORE.toWater ? OUTER_GROUND_Y - ((OUTER_GROUND_Y - SHORE.seaY) * d) / SHORE.toWater : SHORE.seaY - 0.025 * (d - SHORE.toWater);
+}
+
+/** Where you can walk out of the meadow and down the beach: beside the
+ *  meadow, as far as wading in the shallows. */
+const SHORE_WALK: Rect = { minX: FIELD.maxX - PLAYER_RADIUS - 0.1, maxX: 52, minZ: FIELD.minZ + 2, maxZ: FIELD.maxZ - 2 };
+const WALKABLE_WITH_SHORE: Rect[] = [...WALKABLE, SHORE_WALK];
+let shore = false;
+
+/** Opens the beach to walking (Beach.tsx, while it's there). */
+export function setShore(on: boolean): void {
+  shore = on;
+}
+
+const onShore = (x: number, z: number) => shore && x > FIELD.maxX && contains(SHORE_WALK, x, z);
+
 /**
  * Pulls a position back into the walkable floor plan. Replaces the old
  * circular bounds clamp: with two rooms, a circle would either cut off the
@@ -222,11 +262,12 @@ export function clampToRooms(position: THREE.Vector3, margin = 0): void {
   // A world made of its own model has no rooms to stay in: walking is the
   // ground's (see setGround), and the camera goes where it likes.
   if (ground) return;
-  for (const room of WALKABLE) {
+  const walkable = shore ? WALKABLE_WITH_SHORE : WALKABLE;
+  for (const room of walkable) {
     if (contains(inset(room, -margin), position.x, position.z)) return;
   }
   let best: { x: number; z: number; distance: number } | null = null;
-  for (const room of WALKABLE) {
+  for (const room of walkable) {
     const bounds = inset(room, -margin);
     const x = THREE.MathUtils.clamp(position.x, bounds.minX, bounds.maxX);
     const z = THREE.MathUtils.clamp(position.z, bounds.minZ, bounds.maxZ);
@@ -893,6 +934,9 @@ export function floorHeightAt(x: number, z: number): number {
   // per step.
   if (onSteps(x, z)) return (FIELD_Y * (z - GARDEN_STEPS.z)) / (STEPS_RUN + GARDEN_STEPS.tread);
   if (inField(x, z)) return meadowHeight(x, z);
+  // Grass up to the sand, then down the beach, and a little way into the
+  // shallows: wading, not swimming.
+  if (onShore(x, z)) return Math.max(shoreY(Math.max(0, x - coastX(z))), SHORE.seaY - 0.15);
   return pondDepthAt(x, z);
 }
 
@@ -905,6 +949,7 @@ export function surfaceAt(x: number, z: number): FloorSurface {
   // win over the outdoor default underneath it.
   if (Math.hypot(x - POND_CENTER[0], z - POND_CENTER[1]) <= POND_WATER_RADIUS) return "water";
   if (contains(TATAMI, x, z)) return "tatami";
+  if (onShore(x, z)) return x - coastX(z) > SHORE.toWater ? "water" : "grass";
   // The garden is gravel and stepping stones rather than floorboards.
   if (contains(OUTDOOR, x, z) || onSteps(x, z)) return "stone";
   if (inField(x, z)) return "grass";
@@ -935,6 +980,6 @@ export function ceilingHeightAt(x: number, z: number): number {
   // Open sky over the garden and the meadow: the camera may rise to look
   // down on the campsite (the hall's walls are WALL_HEIGHT; over the
   // garden it used to share their limit, which only mattered indoors).
-  if (inField(x, z)) return 9;
+  if (inField(x, z) || onShore(x, z)) return 9;
   return WALL_HEIGHT - 0.5;
 }

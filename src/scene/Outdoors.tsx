@@ -3,7 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { skyState } from "../sky/skyState";
 import type { Season } from "../sky/seasons";
-import { FIELD, POND_CENTER, POND_WATER_RADIUS } from "./layout";
+import { coastX, FIELD, POND_CENTER, POND_WATER_RADIUS } from "./layout";
 import { buildMeadowGeometry } from "./meadow";
 
 /**
@@ -172,7 +172,7 @@ function seasonalTreeColors(base: number[], season: Season | null): Float32Array
 const NIGHT_BRIGHTNESS = 0.22;
 const NIGHT_TINT = new THREE.Color(0.75, 0.82, 1.0);
 
-export function Outdoors() {
+export function Outdoors({ beach = false }: { beach?: boolean }) {
   const ground = useMemo(makeGroundTexture, []);
   const snow = useMemo(makeSnowTexture, []);
   const treeMesh = useRef<THREE.InstancedMesh | null>(null);
@@ -230,7 +230,19 @@ export function Outdoors() {
    */
   const groundGeometry = useMemo(() => {
     const shape = new THREE.Shape();
-    shape.absarc(0, 0, GROUND_RADIUS, 0, Math.PI * 2, false);
+    if (beach) {
+      // The grass stops where the sand starts (Beach.tsx): the disc's edge
+      // follows the shore on its east side instead of the circle.
+      const SEGMENTS = 160;
+      for (let i = 0; i <= SEGMENTS; i++) {
+        const a = (i / SEGMENTS) * Math.PI * 2;
+        const x = Math.cos(a) * GROUND_RADIUS;
+        const y = Math.sin(a) * GROUND_RADIUS;
+        const point: [number, number] = [Math.min(x, coastX(-y)), y];
+        if (i === 0) shape.moveTo(...point);
+        else shape.lineTo(...point);
+      }
+    } else shape.absarc(0, 0, GROUND_RADIUS, 0, Math.PI * 2, false);
     const hole = new THREE.Path();
     // The mesh is rotated -90 degrees about X, which maps shape (x, y)
     // onto world (x, 0, -y) — hence the negated pond Z. Slightly wider
@@ -258,7 +270,7 @@ export function Outdoors() {
     }
     uv.needsUpdate = true;
     return geometry;
-  }, []);
+  }, [beach]);
   useEffect(() => () => groundGeometry.dispose(), [groundGeometry]);
   // The meadow's ground, textured to run on from the disc's: the disc's
   // UVs are its shape coordinates (x, -z) scaled into 0..1.
@@ -271,7 +283,7 @@ export function Outdoors() {
   useEffect(() => () => snow?.dispose(), [snow]);
 
   // One instanced draw call for every tree, and another for the hills.
-  const { trees, treeColors, hills, treeCount } = useMemo(() => {
+  const { trees, treeColors, hills, treeCount, hillCount } = useMemo(() => {
     const random = mulberry32(1337);
     const matrix = new THREE.Matrix4();
     const position = new THREE.Vector3();
@@ -294,11 +306,15 @@ export function Outdoors() {
       // None on the meadow you can walk out onto (or so close that a
       // branch would hang over its edge): the trees beyond it mark where
       // it ends instead.
+      // Nor on the beach or in the sea, nor right at the top of the sand.
       if (
-        position.x > FIELD.minX - FIELD_TREE_MARGIN &&
-        position.x < FIELD.maxX + FIELD_TREE_MARGIN &&
-        position.z > FIELD.minZ - FIELD_TREE_MARGIN &&
-        position.z < FIELD.maxZ + FIELD_TREE_MARGIN
+        (position.x > FIELD.minX - FIELD_TREE_MARGIN &&
+          position.x < FIELD.maxX + FIELD_TREE_MARGIN &&
+          position.z > FIELD.minZ - FIELD_TREE_MARGIN &&
+          position.z < FIELD.maxZ + FIELD_TREE_MARGIN) ||
+        (beach && position.x > coastX(position.z) - 5) ||
+        // nor on the way from the meadow down to the beach.
+        (beach && position.x > FIELD.maxX - 2 && position.z > FIELD.minZ && position.z < FIELD.maxZ)
       ) {
         // Draw the rest of this tree's randoms anyway, so every other tree
         // stays exactly where it was.
@@ -322,12 +338,14 @@ export function Outdoors() {
       quaternion.identity();
       const spread = 55 + random() * 70;
       scale.set(spread, 16 + random() * 16, spread);
+      // Over the sea, a hill would be an island in the way of the horizon.
+      if (beach && position.x > coastX(position.z) - spread * 0.6) continue;
       matrix.compose(position, quaternion, scale);
       hills.push(...matrix.elements);
     }
 
-    return { trees, treeColors, hills, treeCount: trees.length / 16 };
-  }, []);
+    return { trees, treeColors, hills, treeCount: trees.length / 16, hillCount: hills.length / 16 };
+  }, [beach]);
 
   const applyInstances = (mesh: THREE.InstancedMesh | null, elements: number[], colors?: number[]) => {
     if (!mesh) return;
@@ -366,7 +384,7 @@ export function Outdoors() {
       {/* Distant hills, sunk into the ground so only their tops show. */}
       <instancedMesh
         ref={(mesh) => applyInstances(mesh, hills)}
-        args={[undefined, undefined, HILL_COUNT]}
+        args={[undefined, undefined, Math.max(1, hillCount)]}
         userData={{ navIgnore: true }}
       >
         <coneGeometry args={[1, 1, 7, 1]} />

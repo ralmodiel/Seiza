@@ -1,0 +1,38 @@
+<!--
+  ISCOLab's mark: a floor plan's rooms seen from above, under Seiza's own
+  twilight-into-starfield (the same gradient stops as public/favicon.svg),
+  so the worlds read as one family in a row of tabs. build.mjs copies this
+  over dist/favicon.svg in ISCOLab's build only.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ISCOLab">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#070c26"/>
+      <stop offset="42%" stop-color="#1b1546"/>
+      <stop offset="72%" stop-color="#4b2a66"/>
+      <stop offset="92%" stop-color="#a85570"/>
+      <stop offset="100%" stop-color="#e8823f"/>
+    </linearGradient>
+    <clipPath id="frame">
+      <rect width="64" height="64" rx="15"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#frame)">
+    <rect width="64" height="64" fill="url(#sky)"/>
+    <g fill="#ffffff">
+      <circle cx="9" cy="8" r="0.9" opacity="0.95"/>
+      <circle cx="21" cy="5" r="0.6" opacity="0.7"/>
+      <circle cx="50" cy="7" r="0.8" opacity="0.9"/>
+      <circle cx="58" cy="13" r="0.5" opacity="0.6"/>
+    </g>
+    <!-- The plan: an outer wall, a long main room, and a row of small rooms,
+         with gaps for doorways. -->
+    <g fill="none" stroke="#e8c37a" stroke-width="2.4" stroke-linecap="square">
+      <path d="M10 22 H54 V52 H10 Z"/>
+      <path d="M10 40 H24 M28 40 H54"/>
+      <path d="M22 40 V52 M36 40 V46 M46 40 V52"/>
+      <path d="M22 22 V31"/>
+    </g>
+    <text x="32" y="17" text-anchor="middle" font-family="system-ui, sans-serif" font-size="6" font-weight="700" fill="#f3e9c0">ISCO</text>
+  </g>
+</svg>

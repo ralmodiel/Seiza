@@ -665,3 +665,62 @@ export function setCicadas(level: number) {
   }
   cicadas.gain.gain.setTargetAtTime(0.045 * level, a.ctx.currentTime, 0.8);
 }
+
+/**
+ * The sea, heard from the beach (Beach.tsx): a low wash that swells and
+ * falls every seven seconds or so as each wave comes in, and a hiss as it
+ * breaks, both rougher in a wind. Call every frame with how near the
+ * waterline you are (0 to 1) and the wind in m/s.
+ */
+let surf: { gain: GainNode; hiss: GainNode } | null = null;
+
+export function setSeaAmbience(level: number, wind: number) {
+  const a = audio();
+  if (!a) return;
+  if (!surf) {
+    if (level <= 0) return;
+    const frames = a.ctx.sampleRate * 4;
+    const buffer = a.ctx.createBuffer(1, frames, a.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    // Brown-ish noise, like the pond's: the low roar of moving water.
+    let last = 0;
+    for (let i = 0; i < frames; i++) {
+      last = (last + Math.random() * 2 - 1) * 0.5;
+      data[i] = last;
+    }
+    const source = a.ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+    const low = a.ctx.createBiquadFilter();
+    low.type = "lowpass";
+    low.frequency.value = 520;
+    // Each wave: a slow swell on the wash's volume.
+    const swell = a.ctx.createGain();
+    swell.gain.value = 0.6;
+    const wave = a.ctx.createOscillator();
+    wave.frequency.value = 0.14;
+    const waveDepth = a.ctx.createGain();
+    waveDepth.gain.value = 0.45;
+    wave.connect(waveDepth).connect(swell.gain);
+    const gain = a.ctx.createGain();
+    gain.gain.value = 0;
+    source.connect(low).connect(swell).connect(gain).connect(a.out);
+    // The break: the same noise, high, on the same swell.
+    const high = a.ctx.createBiquadFilter();
+    high.type = "highpass";
+    high.frequency.value = 2200;
+    const hiss = a.ctx.createGain();
+    hiss.gain.value = 0;
+    const hissSwell = a.ctx.createGain();
+    hissSwell.gain.value = 0.5;
+    waveDepth.connect(hissSwell.gain);
+    source.connect(high).connect(hissSwell).connect(hiss).connect(a.out);
+    source.start();
+    wave.start();
+    surf = { gain, hiss };
+  }
+  const t = a.ctx.currentTime;
+  const rough = Math.min(1, Math.max(0, wind / 20));
+  surf.gain.gain.setTargetAtTime(level * (0.07 + 0.05 * rough), t, 0.5);
+  surf.hiss.gain.setTargetAtTime(level * (0.012 + 0.03 * rough), t, 0.5);
+}

@@ -13,6 +13,7 @@ import { LightPool } from "./LightPool";
 import { SkyDriver } from "../sky/SkyDriver";
 import { Seasons } from "./Seasons";
 import { Rain } from "./Rain";
+import { Beach } from "./Beach";
 import type { SkyConfig } from "../sky/skyState";
 import type { RoomSky } from "../multiplayer/types";
 
@@ -35,6 +36,8 @@ interface SceneProps {
    *  means the uploaded model's geometry is walked straight through.
    *  Defaults on. */
   environmentCollision?: boolean;
+  /** The beach past the meadow (world.json `beach`; src/scene/Beach.tsx). */
+  beach?: boolean;
   skyboxUrl?: string | null;
   onFloorDoubleClick?: (point: THREE.Vector3) => void;
   onSit?: (seat: Seat) => void;
@@ -220,6 +223,7 @@ export const Scene = memo(function Scene({
   builtin = true,
   environmentIsCustom = false,
   environmentCollision = true,
+  beach = false,
   skyboxUrl = null,
   onFloorDoubleClick,
   onSit,
@@ -257,7 +261,8 @@ export const Scene = memo(function Scene({
         <SunsetSky sunPosition={SUN} dynamic={moving} radius={skyRadius} vibrance={vibrance} />
       )}
       <fog attach="fog" args={[SUNSET_HORIZON_COLOR, fogNear, fogFar]} />
-      {builtin && <Outdoors />}
+      {builtin && <Outdoors beach={beach} />}
+      {builtin && beach && <Beach />}
       {/* Warm sky above, warmer bounce off the wooden floor below. A big
           share of the light comes from here rather than the sun, which is
           what keeps the shadows soft. */}
