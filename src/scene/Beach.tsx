@@ -1,6 +1,6 @@
 /**
  * A beach and the sea, past the meadow's east side, where the treeline
- * would be (world.json `beach`): what you see across the meadow from where
+ * would be, in every world on Seiza's grounds: what you see across the meadow from where
  * you arrive. You can walk out of the meadow, down the sand, and into
  * the shallows (layout.ts's shore, opened while this is mounted).
  *

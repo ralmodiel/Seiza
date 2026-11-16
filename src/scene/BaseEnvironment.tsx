@@ -928,13 +928,14 @@ function ClassroomDoor({ m }: { m: WorldMaterials }) {
           <mesh position={[0, SHOJI_PANEL_HEIGHT / 2, 0]} material={m.trim} castShadow onClick={toggle}>
             <boxGeometry args={[SHOJI_PANEL_WIDTH, SHOJI_PANEL_HEIGHT, SHOJI_PANEL_DEPTH]} />
           </mesh>
-          {/* Washi paper inset, on both faces so it reads from either room. */}
+          {/* Washi paper inset (capiz, in the Filipino theme), on both
+              faces so it reads from either room. */}
           {[1, -1].map((face) => (
             <mesh
               key={`paper-${face}`}
               position={[0, SHOJI_PANEL_HEIGHT / 2, face * (SHOJI_PANEL_DEPTH / 2 + 0.002)]}
               rotation={[0, face > 0 ? 0 : Math.PI, 0]}
-              material={m.paper}
+              material={m.doorPanel}
               onClick={toggle}
             >
               <planeGeometry args={[SHOJI_PANEL_WIDTH - 0.1, SHOJI_PANEL_HEIGHT - 0.1]} />

@@ -497,7 +497,9 @@ so a failure in it leaves the rest of Seiza running. It receives
 - the players, and ways to play gestures, warp, and turn this visitor,
 - private messages between visitors, and a per-viewer filter for who you
   see and hear,
-- a card in the HUD (`showWorldOverlay`) and paths for guides (`findPath`).
+- a card in the HUD (`showWorldOverlay`) and paths for guides (`findPath`),
+- seats of its own (`sit`, with `SeatPad`), and solid furniture
+  (`setWorldObstacles`).
 
 Guides answer only from text the world's authors wrote, by retrieval
 (`src/guides/brain.ts`). There's no language model, so a guide can't make up

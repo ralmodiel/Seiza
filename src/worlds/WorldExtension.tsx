@@ -1,6 +1,7 @@
 import { Component, useEffect, useState, useSyncExternalStore, type ComponentType, type ReactNode } from "react";
 import type * as THREE from "three";
 import type { LightZone, PlayerState, RoomSky, WorldObject, WorldStateValue } from "../multiplayer/types";
+import type { Seat } from "../scene/layout";
 
 /**
  * A world's own in-world code: exhibits, displays, and controls that only
@@ -55,6 +56,13 @@ export interface WorldSceneProps {
    *  mesh (the one click-to-walk uses), or null when there's none yet:
    *  for guides who lead the way (src/guides/). */
   findPath: (from: THREE.Vector3, to: THREE.Vector3) => THREE.Vector3[] | null;
+  /** Sits this visitor on one of the world's own seats (a bench it
+   *  builds), exactly as on Seiza's: draw a SeatPad (src/scene/SeatPad.tsx)
+   *  for each and hand it this. Absent in Edit Mode, when seats can't be
+   *  sat on. Give each seat an id of the world's own, such as "tulay-…". */
+  sit?: (seat: Seat) => void;
+  /** The seat this visitor is on, if any (any seat, Seiza's or the world's). */
+  occupiedSeatId: string | null;
 }
 
 export interface WorldModule {

@@ -4,10 +4,31 @@
 first, and takes its inspiration from Japan; Tulay is the same platform,
 for Filipino learners and partners, at `tulay.seiza.cc`.
 
-This folder is the starting point. Today Tulay is Seiza's own world under
-its own name and icon, with the beach, Philippine weather and sky, and no
-Japanese seasons (the Philippines has a wet and a dry season instead). The
-plan below is what makes it Filipino.
+Tulay is Seiza's own grounds, dressed as a Filipino place, under its own
+name and icon, with Philippine weather and sky and no Japanese seasons (the
+Philippines has a wet and a dry season instead).
+
+## What's in it
+
+- **Seiza's hall and classroom, in the Filipino theme** (`"theme":
+  "filipino"` in `world/world.json`; `src/scene/materials.ts`): a banig mat
+  where the tatami was, capiz panels in the classroom door, capiz lamps, and
+  broadleaf trees round the grounds in place of the cones.
+- **A kubo hall** on the meadow (`client/Kubo.tsx`): a big bahay kubo for
+  classes, open at the front, with sawali walls, a nipa roof, a chalkboard,
+  capiz lamps that come on at dusk, and twelve seats on bamboo benches.
+- **Beach cottages**: two kubos on stilts on the sand, open to the sea, each
+  with two seats on its edge facing the water.
+- **Coconut palms** down the top of the beach (`client/Palms.tsx`), their
+  fronds swaying with the wind.
+- **A fiesta** (`client/Fiesta.tsx`): banderitas over the garden and in front
+  of the kubo hall, with string lights that come on at dusk, and parols over
+  the garden door and the kubo hall from September to January.
+- The campsite and the tent, the garden and its pond, the portals, and the
+  beach, as in Seiza.
+
+Where everything stands, its seats, and its collision are in
+`client/plan.ts`, checked by `client/plan.test.ts`.
 
 ## Deploy
 
@@ -52,12 +73,13 @@ Seiza's interface is English and Japanese: every string is written as
 reviews the translations (machine translation alone won't do for a public
 release).
 
-### 2. A Filipino place
+### 2. A Filipino place (done)
 
 The built-in hall is Japanese: tatami, shoji, a seiza bench. Rather than a
 second set of rooms (and a second set of collision and seats to maintain),
 a theme in `world.json` (`"theme": "filipino"`) swaps what things look like
-and keeps where they are:
+and keeps where they are. This is in place (see "What's in it" above); the
+table was the plan:
 
 | Seiza | Tulay |
 | --- | --- |
@@ -97,4 +119,12 @@ worlds/tulay/
   wrangler.jsonc     Tulay's own Worker
   favicon.svg        Tulay's tab icon: a bridge over water
   world/world.json   The world's settings
+  client/
+    index.tsx        Tulay's own scene code, loaded only in Tulay
+    plan.ts          Where everything is, its seats, and its collision
+    Kubo.tsx         The kubo hall and the beach cottages
+    Palms.tsx        The coconut palms
+    Fiesta.tsx       Banderitas, string lights, and parols
+    materials.ts     Nipa, sawali, bamboo, fronds, the chalkboard
+    geometry.ts      Roof, cane, and merging helpers
 ```

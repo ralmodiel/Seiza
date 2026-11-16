@@ -703,6 +703,13 @@ from `src/sky/skyState.ts` to read the exact time (`simMs`) and live weather
 `findPath(from, to)` gives a walking route along the world's navigation
 mesh (the one click-to-walk uses), or null before there is one.
 
+`sit(seat)` and `occupiedSeatId` give a world seats of its own, such as the
+benches it builds: draw a `SeatPad` (`src/scene/SeatPad.tsx`) for each seat
+and hand it `sit`, and sitting, standing up, and showing whose seat is taken
+work as on Seiza's own. Give each seat an id of the world's own (Tulay's are
+`tulay-…`), and an `exit` when getting up beside it would put someone inside
+something. `sit` is absent in Edit Mode, when nothing can be sat on.
+
 #### Guides
 
 A world can have guides: avatars who walk a round of the world and answer
@@ -1195,6 +1202,17 @@ classroom.
 
 `materials.ts` draws the wood, tatami, and plaster textures onto a canvas at
 startup, and shares one material per surface across a few hundred meshes.
+A world's `theme` (world.json) picks how the rooms are dressed: `"japanese"`,
+the default, or `"filipino"`, which draws banig for the tatami, capiz for the
+classroom door's panels and the lamps, and broadleaf trees for the treeline's
+cones. Only materials and the trees' shape change, so collision and seats
+are the same in both.
+
+Past the meadow's east side are a beach and the sea (`Beach.tsx`), part of
+the grounds in every world built on them. Visitors can walk from the meadow
+down the sand to the water's edge; `layout.ts` shapes the coast (`coastX`)
+and the slope of the sand (`shoreY`), which walking, the grass's edge, and
+the drawing all follow.
 The sky is a custom shader (`SunsetSky.tsx`), not an image-based environment
 map. drei's `<Environment preset>` downloads an HDR file from another CDN,
 which a self-hosted deployment shouldn't depend on, and which would leave the

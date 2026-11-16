@@ -215,8 +215,8 @@ const WALKABLE: Rect[] = [
 // --- the beach --------------------------------------------------------------
 
 /**
- * The beach past the meadow's east side, in a world that has one (world.json
- * `beach`; src/scene/Beach.tsx draws it). Its shape lives here, with the
+ * The beach past the meadow's east side, part of Seiza's grounds in every
+ * world built on them (src/scene/Beach.tsx draws it). Its shape lives here, with the
  * rest of the grounds, because walking, the grass's edge (Outdoors.tsx), and
  * the drawing all follow it.
  */

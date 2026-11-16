@@ -41,6 +41,8 @@ const WALL_HEIGHT = 3.2;
 /** The lawn round the lab, from its edge, in metres. */
 const LAWN_MARGIN = 18;
 const LAWN_COLOR = [0.24, 0.42, 0.17, 1];
+/** The floor and the columns, which the model leaves without a material. */
+const CONCRETE_COLOR = [0.62, 0.6, 0.56, 1];
 
 /** Where people can walk, for a 1.6 to 1.8 m person, with cells small
  *  enough for an ordinary doorway (0.8 m and up) to stay open. */
@@ -101,6 +103,14 @@ log(`Plan ${(lab.max[0] - lab.min[0]).toFixed(1)} × ${(lab.max[2] - lab.min[2])
 // walls, light them either way.
 await doc.transform(weld(), normals({ overwrite: true }));
 for (const material of root.listMaterials()) material.setDoubleSided(true);
+// The floor and the columns have no material in the model, and glTF's
+// default is fully metallic, which renders near-black without an
+// environment map. Plain concrete instead, and nothing metallic anywhere.
+{
+  const concrete = doc.createMaterial("Concrete").setBaseColorFactor(CONCRETE_COLOR).setRoughnessFactor(0.9).setMetallicFactor(0).setDoubleSided(true);
+  for (const mesh of root.listMeshes()) for (const prim of mesh.listPrimitives()) if (!prim.getMaterial()) prim.setMaterial(concrete);
+  for (const material of root.listMaterials()) material.setMetallicFactor(0);
+}
 
 // 3. A lawn round it, a centimetre under the lab's floor.
 {

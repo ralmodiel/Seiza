@@ -1,7 +1,9 @@
 // Builds the Tulay deployment into dist/: Seiza's own client and Worker,
 // with the world switched to "tulay", plus Tulay's world config and its
 // icon. Tulay is Seiza's own grounds (hall, classroom, garden, meadow,
-// beach), so there's no model to add.
+// beach), so there's no model to add; its kubo hall, cottages, palms, and
+// fiesta are code in worlds/tulay/client/, which Seiza's client loads
+// through its world extension hook, so they're part of the client build.
 //
 //   node worlds/tulay/build.mjs
 //   npx wrangler deploy --config worlds/tulay/wrangler.jsonc

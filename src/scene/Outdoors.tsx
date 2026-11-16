@@ -5,6 +5,8 @@ import { skyState } from "../sky/skyState";
 import type { Season } from "../sky/seasons";
 import { coastX, FIELD, POND_CENTER, POND_WATER_RADIUS } from "./layout";
 import { buildMeadowGeometry } from "./meadow";
+import { getWorldTheme } from "./materials";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 /**
  * What you see through the windows.
@@ -134,6 +136,37 @@ const SNOW_DUST = new THREE.Color("#dfe6ee");
  *  multiplied by: a seasonal colour is divided by it first, so it comes
  *  out as itself rather than darkened to the pines' green. */
 const TREE_MATERIAL = "#54683a";
+
+/**
+ * A tropical treeline's tree, for the Filipino theme (materials.ts): a
+ * short trunk under a broad, lumpy crown, the shape of a mango or an
+ * acacia, where the Japanese default is a cone. Built in the cone's own
+ * frame (6 m tall, its origin at the middle) so the same instances fit.
+ * The trunk is darkened with a vertex colour; the crown takes each
+ * instance's tint as the cone does.
+ */
+function broadleafTree(): THREE.BufferGeometry {
+  const trunk = new THREE.CylinderGeometry(0.18, 0.3, 3, 6, 1, true).translate(0, -1.5, 0);
+  const crown = [
+    new THREE.IcosahedronGeometry(2.1, 1).scale(1, 0.62, 1).translate(0, 0.9, 0),
+    new THREE.IcosahedronGeometry(1.35, 0).scale(1, 0.7, 1).translate(1.2, 0.45, 0.5),
+    new THREE.IcosahedronGeometry(1.25, 0).scale(1, 0.7, 1).translate(-1.0, 0.55, -0.6),
+    new THREE.IcosahedronGeometry(1.1, 0).scale(1, 0.75, 1).translate(0.2, 1.8, -0.2),
+  ];
+  const paint = (g: THREE.BufferGeometry, r: number, gr: number, b: number) => {
+    const plain = g.index ? g.toNonIndexed() : g;
+    plain.deleteAttribute("uv");
+    const count = plain.getAttribute("position").count;
+    const colors = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) colors.set([r, gr, b], i * 3);
+    plain.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    return plain;
+  };
+  const parts = [paint(trunk, 0.55, 0.42, 0.3), ...crown.map((g) => paint(g, 1, 1, 1))];
+  const merged = mergeGeometries(parts) ?? new THREE.BufferGeometry();
+  merged.computeVertexNormals();
+  return merged;
+}
 const treeMaterialColor = new THREE.Color(TREE_MATERIAL);
 const treeMaterialInverse = new THREE.Color(1 / treeMaterialColor.r, 1 / treeMaterialColor.g, 1 / treeMaterialColor.b);
 
@@ -172,8 +205,12 @@ function seasonalTreeColors(base: number[], season: Season | null): Float32Array
 const NIGHT_BRIGHTNESS = 0.22;
 const NIGHT_TINT = new THREE.Color(0.75, 0.82, 1.0);
 
-export function Outdoors({ beach = false }: { beach?: boolean }) {
+export function Outdoors() {
   const ground = useMemo(makeGroundTexture, []);
+  // The treeline's trees: cones, or broadleaf trees in a Filipino world.
+  const tropical = getWorldTheme() === "filipino";
+  const tropicalTree = useMemo(() => (tropical ? broadleafTree() : null), [tropical]);
+  useEffect(() => () => tropicalTree?.dispose(), [tropicalTree]);
   const snow = useMemo(makeSnowTexture, []);
   const treeMesh = useRef<THREE.InstancedMesh | null>(null);
   const shownSeason = useRef<Season | null>(null);
@@ -230,19 +267,17 @@ export function Outdoors({ beach = false }: { beach?: boolean }) {
    */
   const groundGeometry = useMemo(() => {
     const shape = new THREE.Shape();
-    if (beach) {
-      // The grass stops where the sand starts (Beach.tsx): the disc's edge
-      // follows the shore on its east side instead of the circle.
-      const SEGMENTS = 160;
-      for (let i = 0; i <= SEGMENTS; i++) {
-        const a = (i / SEGMENTS) * Math.PI * 2;
-        const x = Math.cos(a) * GROUND_RADIUS;
-        const y = Math.sin(a) * GROUND_RADIUS;
-        const point: [number, number] = [Math.min(x, coastX(-y)), y];
-        if (i === 0) shape.moveTo(...point);
-        else shape.lineTo(...point);
-      }
-    } else shape.absarc(0, 0, GROUND_RADIUS, 0, Math.PI * 2, false);
+    // The grass stops where the sand starts (Beach.tsx): the disc's edge
+    // follows the shore on its east side instead of the circle.
+    const SEGMENTS = 160;
+    for (let i = 0; i <= SEGMENTS; i++) {
+      const a = (i / SEGMENTS) * Math.PI * 2;
+      const x = Math.cos(a) * GROUND_RADIUS;
+      const y = Math.sin(a) * GROUND_RADIUS;
+      const point: [number, number] = [Math.min(x, coastX(-y)), y];
+      if (i === 0) shape.moveTo(...point);
+      else shape.lineTo(...point);
+    }
     const hole = new THREE.Path();
     // The mesh is rotated -90 degrees about X, which maps shape (x, y)
     // onto world (x, 0, -y) — hence the negated pond Z. Slightly wider
@@ -270,7 +305,7 @@ export function Outdoors({ beach = false }: { beach?: boolean }) {
     }
     uv.needsUpdate = true;
     return geometry;
-  }, [beach]);
+  }, []);
   useEffect(() => () => groundGeometry.dispose(), [groundGeometry]);
   // The meadow's ground, textured to run on from the disc's: the disc's
   // UVs are its shape coordinates (x, -z) scaled into 0..1.
@@ -312,9 +347,9 @@ export function Outdoors({ beach = false }: { beach?: boolean }) {
           position.x < FIELD.maxX + FIELD_TREE_MARGIN &&
           position.z > FIELD.minZ - FIELD_TREE_MARGIN &&
           position.z < FIELD.maxZ + FIELD_TREE_MARGIN) ||
-        (beach && position.x > coastX(position.z) - 5) ||
+        position.x > coastX(position.z) - 5 ||
         // nor on the way from the meadow down to the beach.
-        (beach && position.x > FIELD.maxX - 2 && position.z > FIELD.minZ && position.z < FIELD.maxZ)
+        (position.x > FIELD.maxX - 2 && position.z > FIELD.minZ && position.z < FIELD.maxZ)
       ) {
         // Draw the rest of this tree's randoms anyway, so every other tree
         // stays exactly where it was.
@@ -339,13 +374,13 @@ export function Outdoors({ beach = false }: { beach?: boolean }) {
       const spread = 55 + random() * 70;
       scale.set(spread, 16 + random() * 16, spread);
       // Over the sea, a hill would be an island in the way of the horizon.
-      if (beach && position.x > coastX(position.z) - spread * 0.6) continue;
+      if (position.x > coastX(position.z) - spread * 0.6) continue;
       matrix.compose(position, quaternion, scale);
       hills.push(...matrix.elements);
     }
 
     return { trees, treeColors, hills, treeCount: trees.length / 16, hillCount: hills.length / 16 };
-  }, [beach]);
+  }, []);
 
   const applyInstances = (mesh: THREE.InstancedMesh | null, elements: number[], colors?: number[]) => {
     if (!mesh) return;
@@ -401,8 +436,12 @@ export function Outdoors({ beach = false }: { beach?: boolean }) {
         args={[undefined, undefined, treeCount]}
         userData={{ navIgnore: true }}
       >
-        <coneGeometry args={[1.5, 6, 6, 1]} />
-        <meshLambertMaterial color={TREE_MATERIAL} fog />
+        {tropicalTree ? (
+          <primitive object={tropicalTree} attach="geometry" />
+        ) : (
+          <coneGeometry args={[1.5, 6, 6, 1]} />
+        )}
+        <meshLambertMaterial color={tropical ? "#7f9a5a" : TREE_MATERIAL} vertexColors={tropical} fog />
       </instancedMesh>
     </group>
   );

@@ -1,7 +1,7 @@
 {
   "id": "iscolab",
-  "displayName": "ISCOLab",
-  "displayNameJa": "ISCOLab",
+  "displayName": "ISCOLab — UP Open University",
+  "displayNameJa": "ISCOLab — フィリピン大学オープン大学",
   "environment": "model",
   "sceneUrl": "/worlds/iscolab/models/lab.glb",
   "navMeshUrl": "/worlds/iscolab/models/lab.navmesh",
@@ -21,5 +21,26 @@
     { "label": "Sample B", "url": "/avatars/vroid/sample-male.vrm", "author": "pixiv Inc. (VRoid Studio sample)", "license": "CC0 1.0", "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/" }
   ],
   "customGestures": [],
-  "defaultObjects": []
+  "defaultObjects": [
+    {"kind": "screen", "position": [2.5, 1.95, -7.8], "rotationY": 0},
+    {"kind": "table", "position": [-2.0, 0, -4.6], "rotationY": 0},
+    {"kind": "chair", "position": [-2.45, 0, -3.82], "rotationY": 0},
+    {"kind": "chair", "position": [-1.55, 0, -3.82], "rotationY": 0},
+    {"kind": "table", "position": [2.5, 0, -4.6], "rotationY": 0},
+    {"kind": "chair", "position": [2.05, 0, -3.82], "rotationY": 0},
+    {"kind": "chair", "position": [2.95, 0, -3.82], "rotationY": 0},
+    {"kind": "table", "position": [7.0, 0, -4.6], "rotationY": 0},
+    {"kind": "chair", "position": [6.55, 0, -3.82], "rotationY": 0},
+    {"kind": "chair", "position": [7.45, 0, -3.82], "rotationY": 0},
+    {"kind": "table", "position": [-2.0, 0, -1.9], "rotationY": 0},
+    {"kind": "chair", "position": [-2.45, 0, -1.12], "rotationY": 0},
+    {"kind": "chair", "position": [-1.55, 0, -1.12], "rotationY": 0},
+    {"kind": "table", "position": [2.5, 0, -1.9], "rotationY": 0},
+    {"kind": "chair", "position": [2.05, 0, -1.12], "rotationY": 0},
+    {"kind": "chair", "position": [2.95, 0, -1.12], "rotationY": 0},
+    {"kind": "table", "position": [7.0, 0, -1.9], "rotationY": 0},
+    {"kind": "chair", "position": [6.55, 0, -1.12], "rotationY": 0},
+    {"kind": "chair", "position": [7.45, 0, -1.12], "rotationY": 0},
+    {"kind": "text", "position": [-3.2, 1.6, -7.95], "rotationY": 0, "text": "ISCOLab · Immersive Science Communication Open Laboratory\n没入型サイエンスコミュニケーション・オープンラボ\n- Click the screen to share yours · スクリーンをクリックして画面を共有\n- Sit at any table · どのテーブルにも座れます\n- UP Open University · フィリピン大学オープン大学"}
+  ]
 }

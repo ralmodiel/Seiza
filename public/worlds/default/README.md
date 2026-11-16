@@ -47,7 +47,7 @@ any:
 | `sceneUrl` | Optional. A glTF environment that replaces the built-in rooms. |
 | `environmentCollision` | Optional. Set to `false` to stop `sceneUrl` environments from blocking movement. Defaults to `true`. |
 | `sky` | Optional. `{ "cycle": "realtime", "site", "weather", "timeScale"?, "seasons"? }` moves the sky with Philippine time and a shared weather schedule; `"cycle": "fixed"`, or leaving it out, keeps the still sunset. `"seasons": true` dresses the outdoors by Japan's calendar (scenery and sound only). Editors can override the time, weather, and season for one room from the edit panel. See DOCS.md, "Sky and weather". |
-| `beach` | Optional. `true` puts a beach and the sea past the meadow's east side, which visitors can walk down to. Built-in grounds only. |
+| `theme` | Optional. `"filipino"` dresses Seiza's own rooms with banig, capiz, and a tropical treeline in place of tatami, washi, and cones. Defaults to `"japanese"`. Built-in grounds only. |
 | `spawnPoint` | Where players appear, as `{ "x", "y", "z" }`. |
 | `spawnRotationY` | Optional. Which way they face on arrival, in radians (0 looks toward -Z). |
 | `defaultAvatarUrl` | A `.vrm` URL for first-time visitors, or `""` for the designer's default look. |

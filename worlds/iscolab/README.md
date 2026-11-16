@@ -16,6 +16,11 @@ made of its own model").
   doorways, between the rooms, and out onto the lawn.
 - **Arrival** is on the lawn, facing the doorway nearest the middle of the
   front wall.
+- **The main lab space** (the large room at the back) is set up for a
+  session: a screen on the north wall to share to, six tables with two
+  chairs each facing it, and a welcome board in English and Japanese. These
+  are the room's starting objects (`defaultObjects` in `world/world.json`),
+  so editors can move or remove them, and a new room starts with them.
 - Everything else Seiza has: voice, chat, screens, boards, avatars,
   gestures, the shared sky and weather, VR and phones.
 
@@ -41,7 +46,9 @@ The script:
    walls down to `WALL_HEIGHT` (the export was at ten times scale, so they
    stood 20 m high).
 3. Recomputes normals and makes the walls two-sided: some faces in the
-   model are wound the wrong way and came out black.
+   model are wound the wrong way and came out black. The floor and the
+   columns, which have no material in the model, get plain concrete (glTF's
+   default material is fully metallic and renders near-black).
 4. Adds the lawn (`LAWN_MARGIN` metres round the lab).
 5. Bakes the navmesh, finds the front wall's doorways, and checks reach.
 6. Joins meshes by material and meshopt-compresses the geometry.

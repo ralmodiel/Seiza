@@ -26,9 +26,10 @@ export interface WorldConfig {
    * whatever is actually in the scene (src/nav/useNavMesh.ts).
    */
   environmentCollision?: boolean;
-  /** A beach and the sea past the meadow's east side, in place of the
-   *  treeline there (src/scene/Beach.tsx). Built-in grounds only. */
-  beach?: boolean;
+  /** How Seiza's own rooms are dressed: "japanese" (the default: tatami,
+   *  washi, paper lanterns) or "filipino" (banig, capiz windows, capiz
+   *  lamps). Materials only; see src/scene/materials.ts. */
+  theme?: "japanese" | "filipino";
   /**
    * What the world is made of. "builtin" (the default): Seiza's own hall,
    * classroom, garden, and meadow, with `sceneUrl` layered over them.

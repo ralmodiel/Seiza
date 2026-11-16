@@ -4,8 +4,10 @@ import { PLACES } from "./campus";
 import type { FloorPlan } from "./Lifts";
 
 // The app's types leave Node out, so the file reader is typed by hand.
-let readFileSync: (path: string, encoding?: "utf8") => Uint8Array & string;
-const file = (name: string) => decodeURIComponent(new URL(`../world/models/${name}`, import.meta.url).pathname);
+let readFileSync: (path: URL, encoding?: "utf8") => Uint8Array & string;
+// A file: URL, which Node reads directly: its pathname is no path on Windows
+// ("/D:/..." became "D:\D:\...").
+const file = (name: string) => new URL(`../world/models/${name}`, import.meta.url);
 let ground: NavGround;
 
 beforeAll(async () => {

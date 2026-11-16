@@ -3,6 +3,7 @@ import { Canvas } from "@react-three/fiber";
 import { XR, createXRStore } from "@react-three/xr";
 import * as THREE from "three";
 import { loadWorldConfig, type WorldConfig } from "./config/worldConfig";
+import { setWorldTheme } from "./scene/materials";
 import { Scene } from "./scene/Scene";
 import { VrmAvatar } from "./avatar/VrmAvatar";
 import { AvatarAnimator, type AnimatorLayerWeights } from "./avatar/AvatarAnimator";
@@ -137,6 +138,16 @@ function useXrSessionActive(): boolean {
     () => xrStore.getState().session != null
   );
 }
+/** Development only: `?at=x,y,z,yaw` starts you somewhere else than the
+ *  world's spawn point, for checking a spot (or screenshotting it) without
+ *  walking there. Ignored in a production build. */
+const DEV_SPAWN = (() => {
+  if (!import.meta.env.DEV || typeof location === "undefined") return null;
+  const parts = new URLSearchParams(location.search).get("at")?.split(",").map(Number);
+  if (!parts || parts.length < 3 || parts.some((n) => !Number.isFinite(n))) return null;
+  return { point: [parts[0], parts[1], parts[2]] as [number, number, number], yaw: parts[3] ?? 0 };
+})();
+
 const OBJECT_COLORS = ["#c94f4f", "#4f8fc9", "#4fc97e", "#c9a94f", "#9a4fc9"];
 // Boards and screens get the app's accent rather than a random colour.
 const ACCENT_OBJECT_COLOR = "#e8c37a";
@@ -243,7 +254,13 @@ export default function App() {
   const gestureTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    loadWorldConfig().then(setWorld).catch(setWorldError);
+    loadWorldConfig()
+      .then((loaded) => {
+        // Before the scene is built: its materials follow the theme.
+        setWorldTheme(loaded.theme);
+        setWorld(loaded);
+      })
+      .catch(setWorldError);
   }, []);
 
   const gestures = useMemo(
@@ -1345,7 +1362,6 @@ export default function App() {
               viewDistance={world.viewDistance}
               environmentIsCustom={!!environmentUrl}
               environmentCollision={currentWorld.environmentCollision !== false}
-              beach={currentWorld.beach === true}
               skyboxUrl={skyboxUrl}
               onFloorDoubleClick={handleFloorClick}
               // In Edit Mode a click belongs to the object gizmos, so the
@@ -1363,6 +1379,8 @@ export default function App() {
             {/* The world's own exhibits and controls, if it ships any. */}
             <WorldExtension
               worldId={world.id}
+              sit={editMode ? undefined : sitDown}
+              occupiedSeatId={seat?.id ?? null}
               canEdit={canEditWorld}
               connected={connected}
               objects={objects}
@@ -1385,8 +1403,8 @@ export default function App() {
             {world.portals && <Portals config={world.portals} builtin={world.environment !== "model"} />}
           </group>
           <PlayerRig
-            spawnPoint={[world.spawnPoint.x, world.spawnPoint.y, world.spawnPoint.z]}
-            spawnRotationY={world.spawnRotationY}
+            spawnPoint={DEV_SPAWN?.point ?? [world.spawnPoint.x, world.spawnPoint.y, world.spawnPoint.z]}
+            spawnRotationY={DEV_SPAWN?.yaw ?? world.spawnRotationY}
             positionRef={positionRef}
             rotationRef={rotationRef}
             lookYawRef={lookYawRef}
