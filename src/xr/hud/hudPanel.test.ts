@@ -43,3 +43,31 @@ describe("the headset panel's together row", () => {
     expect(asked.buttons.some((b) => b.id === "together:hug")).toBe(false);
   });
 });
+
+describe("the headset panel's admin section", () => {
+  const admin = (removeArmed = false) => ({
+    onGather: vi.fn(),
+    people: [{ id: "bea", name: "Bea", mic: true, removeArmed }],
+    onMute: vi.fn(),
+    onGoTo: vi.fn(),
+    onRemove: vi.fn(),
+  });
+
+  it("is there only for an admin", () => {
+    expect(layoutHud(base).buttons.some((b) => b.id.startsWith("admin:"))).toBe(false);
+    expect(layoutHud({ ...base, admin: admin() }).buttons.map((b) => b.id)).toEqual(
+      expect.arrayContaining(["admin:gather", "admin:mute:bea", "admin:goto:bea", "admin:remove:bea"])
+    );
+  });
+
+  it("mutes a live mic, and asks before removing", () => {
+    const model = admin();
+    const layout = layoutHud({ ...base, admin: model });
+    layout.buttons.find((b) => b.id === "admin:mute:bea")!.onPress();
+    expect(model.onMute).toHaveBeenCalledWith("bea", true);
+    expect(layout.buttons.find((b) => b.id === "admin:remove:bea")!.label).toBe("Remove");
+    const armed = layoutHud({ ...base, admin: admin(true) }).buttons.find((b) => b.id === "admin:remove:bea")!;
+    expect(armed.label).toBe("Sure?");
+    expect(armed.active).toBe(true);
+  });
+});

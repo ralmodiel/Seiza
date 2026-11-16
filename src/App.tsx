@@ -151,6 +151,10 @@ const GESTURE_FALLBACK_SECONDS = 10;
  *  a seat puts its sitter exactly on its spot, and no two seats are this
  *  close together. */
 const SEAT_TAKEN_RADIUS = 0.3;
+/** How many people the headset menu's admin section lists: the nearest. */
+const XR_ADMIN_PEOPLE = 5;
+/** How long a first "Remove" press in the headset menu waits for the second. */
+const XR_REMOVE_CONFIRM_MS = 4000;
 /** How often to recheck who's near enough to ask for a together gesture. */
 const NEARBY_CHECK_MS = 300;
 
@@ -1193,6 +1197,14 @@ export default function App() {
   }, [togetherOffered]);
   const waitingRequest = together.incoming[0] ?? null;
   const comfortVignette = useComfortVignette();
+  // Removing someone from the headset menu takes two presses: the first
+  // arms it ("Sure?") for a few seconds. There's no confirm dialog in VR.
+  const [xrRemoveArmed, setXrRemoveArmed] = useState<string | null>(null);
+  useEffect(() => {
+    if (!xrRemoveArmed) return;
+    const timer = window.setTimeout(() => setXrRemoveArmed(null), XR_REMOVE_CONFIRM_MS);
+    return () => window.clearTimeout(timer);
+  }, [xrRemoveArmed]);
 
   if (worldError) return <CenteredMessage text={L(`Couldn't load world: ${worldError.message}`, `ワールドを読み込めませんでした:${worldError.message}`)} />;
   if (!world) return <CenteredMessage text={L("Loading world…", "ワールドを読み込み中…")} />;
@@ -1254,6 +1266,29 @@ export default function App() {
       : null,
     standUp: seat || posture ? standUp : null,
     comfort: { active: comfortVignette, toggle: () => setComfortVignette(!comfortVignette) },
+    // The people nearest you, listed by name so the rows don't reorder
+    // under your pointer as everyone moves.
+    admin: isAdmin
+      ? {
+          onGather: adminGatherAll,
+          people: Object.values(players)
+            .filter((p) => p.id !== selfId)
+            .map((p) => ({ p, d: Math.hypot(p.position[0] - positionRef.current[0], p.position[2] - positionRef.current[2]) }))
+            .sort((a, b) => a.d - b.d)
+            .slice(0, XR_ADMIN_PEOPLE)
+            .map(({ p }) => p)
+            .sort((a, b) => a.displayName.localeCompare(b.displayName))
+            .map((p) => ({ id: p.id, name: p.displayName, mic: Boolean(p.media?.mic), removeArmed: xrRemoveArmed === p.id })),
+          onMute: (id, mute) => adminSetMute(id, mute),
+          onGoTo: teleportToPlayer,
+          onRemove: (id) => {
+            if (xrRemoveArmed === id) {
+              setXrRemoveArmed(null);
+              adminKick(id);
+            } else setXrRemoveArmed(id);
+          },
+        }
+      : null,
     chat: messages.slice(-3).map((m) => ({ id: m.id, name: m.senderName, text: m.text })),
     onExit: () => void xrStore.getState().session?.end(),
     request: waitingRequest

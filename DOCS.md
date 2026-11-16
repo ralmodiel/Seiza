@@ -224,6 +224,9 @@ guarantee yet.
   touch controls appear on touch-first devices and update if that changes,
   for example when a tablet is docked to a keyboard. On a phone, the controls
   fold into a drawer: on the side in portrait, along the bottom in landscape.
+  A headset's own browser (Quest, Pico, Wolvic) also gets them when you use
+  Seiza as a flat page without entering VR, since there's usually no
+  keyboard; press them with the controller's ray.
 - **In-world editing.** Anyone in a room can turn on Edit Mode to place
   objects or paste in a glTF model URL, then drag to move and delete them.
   Placed objects are saved per room. Minimize the edit panel (–) to see more
@@ -1067,6 +1070,8 @@ Entering VR keeps the same world and the same people:
 - The floor steps up onto the tatami.
 - You can sit on chairs with a controller ray, and push the stick to stand.
 - An admin's gather places your head at the gathering spot.
+- You enter VR where you stood, facing where you looked, and leave it where
+  the headset last stood.
 
 Two modules add what a flat screen doesn't need. Both live in `src/xr/`, are
 mounted from `App.tsx`, and do nothing outside an immersive session.
@@ -1142,11 +1147,23 @@ headset gets its own menu (`src/xr/hud/`):
 
 The menu has voice controls (enable, mute, and unmute), every menu gesture
 plus seiza and crouch (hold-type gestures are held), **Stand up** when
-seated, the last three chat messages, and **Exit VR**. It's drawn on a canvas
-with the same style tokens as the flat interface (`src/ui/styles.ts`), so
-restyling one restyles both.
+seated, **Comfort** (the vignette), the last three chat messages, and
+**Exit VR**. It's drawn on a canvas with the same style tokens as the flat
+interface (`src/ui/styles.ts`), so restyling one restyles both.
 
-To use the avatar picker, the participant list, the edit panel, or the
+Together gestures work from the menu as on a screen:
+
+- When someone comes within reach, a short notice says so ("Bea is close")
+  and how to open the menu, where an **Ask Bea for** row lists the gestures.
+- When someone asks you, the menu opens in front of you with **Yes** and
+  **No thanks** at the top, and closes again once you answer.
+
+An admin gets an **Admin** section: **Gather everyone here**, and for the
+five people nearest you, **Mute** or **Unmute**, **Go to**, and **Remove**.
+**Remove** asks once more (**Sure?**) before it acts. Sign in with the admin
+key before you enter VR, since the key can't be typed in a headset.
+
+To use the avatar picker, the full participant list, the edit panel, or the
 keyboard, you need to leave VR.
 
 #### Headset testing status

@@ -306,6 +306,40 @@ export function PlayerRig({
   const crouchEyeDropRef = useRef(0);
   const reducedMotionRef = useRef(false);
 
+  // Into and out of a headset where you are. The flat screen and the
+  // headset each keep their own position (the virtual camera, and the XR
+  // origin), and neither followed the other: entering VR put you wherever
+  // the headset last was, and leaving it put you back where you'd stood
+  // before you went in.
+  const wasPresentingRef = useRef(false);
+  useEffect(() => {
+    if (isPresenting === wasPresentingRef.current) return;
+    wasPresentingRef.current = isPresenting;
+    const vcam = virtualCameraRef.current!;
+    const origin = xrOriginRef.current;
+    if (isPresenting) {
+      // The playspace's centre where your feet are, facing the way you
+      // were looking. The head's own offset in the room is corrected from
+      // the first frames that report it (see the XR branch).
+      if (!origin) return;
+      const yaw = new THREE.Euler().setFromQuaternion(vcam.quaternion, "YXZ").y;
+      origin.position.set(vcam.position.x, vcam.position.y - EYE_HEIGHT, vcam.position.z);
+      origin.rotation.set(0, yaw, 0);
+      return;
+    }
+    // Back on the flat screen at the last place the headset stood, facing
+    // the way your head did.
+    const [x, y, z] = positionRef.current;
+    vcam.position.set(x, y + EYE_HEIGHT, z);
+    vcam.quaternion.setFromEuler(new THREE.Euler(0, lookYawRef?.current ?? rotationRef.current, 0, "YXZ"));
+    avatarYawRef.current = rotationRef.current;
+    groundEyeYRef.current = y + EYE_HEIGHT;
+    verticalVelocityRef.current = 0;
+    moveTargetRef.current = null;
+    if (movePathRef) movePathRef.current = null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPresenting]);
+
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");

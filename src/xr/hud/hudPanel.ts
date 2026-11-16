@@ -41,6 +41,17 @@ export interface XrHudModel {
   /** Someone within reach to ask for a together gesture, in a headset as
    *  on a screen, or null. `waiting` is your own request while it waits. */
   together?: { name: string; gestures: { name: string; label: string }[]; onAsk: (gesture: string) => void; waiting: string | null } | null;
+  /** Moderation, for an admin (signed in with the admin key before
+   *  entering VR): gather everyone here, and for the people nearest you,
+   *  mute or unmute, go to them, or remove them. Removing takes a second
+   *  press: `removeArmed` is the first one, waiting for it. */
+  admin?: {
+    onGather: () => void;
+    people: { id: string; name: string; mic: boolean; removeArmed: boolean }[];
+    onMute: (id: string, mute: boolean) => void;
+    onGoTo: (id: string) => void;
+    onRemove: (id: string) => void;
+  } | null;
 }
 
 export interface HudButton {
@@ -282,6 +293,53 @@ export function layoutHud(model: XrHudModel): HudLayout {
       buttons.push({ ...item, x: PAD + column * (w + GAP), y: y + row * (ROW + GAP), w, h: ROW });
     });
     y += Math.ceil(gestureItems.length / GESTURE_COLUMNS) * (ROW + GAP) + GAP;
+  }
+
+  // ---- admin ----
+  if (model.admin) {
+    const admin = model.admin;
+    texts.push({ text: L("Admin", "管理者"), x: PAD, y: y + LABEL * 0.7, size: 12 * SCALE, color: MUTED_TEXT, maxWidth: inner });
+    y += LABEL;
+    buttons.push({ id: "admin:gather", label: L("Gather everyone here", "全員をここに集める"), x: PAD, y, w: inner, h: ROW, hold: false, active: false, disabled: false, onPress: admin.onGather });
+    y += ROW + GAP;
+    // One row a person: the name, then mute, go to, and remove.
+    const nameWidth = inner * 0.34;
+    const w = (inner - nameWidth - GAP * 3) / 3;
+    for (const person of admin.people) {
+      texts.push({ text: person.name, x: PAD, y: y + ROW / 2, size: 13 * SCALE, color: TEXT, maxWidth: nameWidth - GAP });
+      let x = PAD + nameWidth + GAP;
+      buttons.push({
+        id: `admin:mute:${person.id}`,
+        label: person.mic ? L("Mute", "ミュート") : L("Unmute", "解除"),
+        x,
+        y,
+        w,
+        h: ROW,
+        hold: false,
+        active: false,
+        disabled: false,
+        icon: person.mic ? "micOff" : "mic",
+        onPress: () => admin.onMute(person.id, person.mic),
+      });
+      x += w + GAP;
+      buttons.push({ id: `admin:goto:${person.id}`, label: L("Go to", "移動"), x, y, w, h: ROW, hold: false, active: false, disabled: false, onPress: () => admin.onGoTo(person.id) });
+      x += w + GAP;
+      buttons.push({
+        id: `admin:remove:${person.id}`,
+        label: person.removeArmed ? L("Sure?", "本当に?") : L("Remove", "退出"),
+        x,
+        y,
+        w,
+        h: ROW,
+        hold: false,
+        // Lit while it waits for the second press.
+        active: person.removeArmed,
+        disabled: false,
+        onPress: () => admin.onRemove(person.id),
+      });
+      y += ROW + GAP;
+    }
+    y += GAP;
   }
 
   // ---- chat, read-only ----

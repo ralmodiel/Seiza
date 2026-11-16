@@ -29,6 +29,8 @@ const PIN_DROP = 0.18;
 /** The X button on a left controller (xr-standard mapping). */
 const PIN_BUTTON = 4;
 const HINT_SECONDS = 12;
+/** How long "Bea is close" stays in view. */
+const NOTICE_SECONDS = 6;
 /** Gaze mode's menu button: this wide, this far ahead, this far below the
  *  eyes and to the right, following the view. */
 const GAZE_BUTTON_WIDTH = 0.11;
@@ -90,6 +92,7 @@ function signatureOf(model: XrHudModel): string {
     model.chat.map((m) => m.id),
     model.request?.text ?? null,
     model.together ? [model.together.name, model.together.gestures.map((g) => g.name), model.together.waiting] : null,
+    model.admin ? model.admin.people.map((p) => [p.id, p.name, p.mic, p.removeArmed]) : null,
   ]);
 }
 
@@ -135,6 +138,13 @@ function XrHudPanel({ model, session }: { model: XrHudModel; session: XRSession 
       comfort: m.comfort && { active: m.comfort.active, toggle: () => live().comfort?.toggle() },
       onExit: () => live().onExit(),
       together: m.together && { ...m.together, onAsk: (gesture) => live().together?.onAsk(gesture) },
+      admin: m.admin && {
+        ...m.admin,
+        onGather: () => live().admin?.onGather(),
+        onMute: (id, mute) => live().admin?.onMute(id, mute),
+        onGoTo: (id) => live().admin?.onGoTo(id),
+        onRemove: (id) => live().admin?.onRemove(id),
+      },
     });
     // The signature is the whole dependency on purpose: see signatureOf.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -187,6 +197,42 @@ function XrHudPanel({ model, session }: { model: XrHudModel; session: XRSession 
     // centre of view is what gets selected).
     if (pinnedRef.current && world && panel) placePinned(panel, world.head.position, world.head.quaternion, GAZE_PIN_DROP);
   };
+
+  // A request ("Bea would like a hug") can't wait for you to think of
+  // opening the menu: it opens in front of you, with its Yes and No at the
+  // top, and closes again once the request is answered or gone, unless
+  // you'd pinned it open yourself.
+  const requestText = model.request?.text ?? null;
+  const autoPinnedRef = useRef(false);
+  useEffect(() => {
+    const world = trackingStore.getLocalWorld();
+    const panel = panelRef.current;
+    if (requestText) {
+      if (pinnedRef.current || !world || !panel) return;
+      pinnedRef.current = true;
+      autoPinnedRef.current = true;
+      placePinned(panel, world.head.position, world.head.quaternion, gazeRef.current ? GAZE_PIN_DROP : PIN_DROP);
+    } else if (autoPinnedRef.current) {
+      autoPinnedRef.current = false;
+      pinnedRef.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestText]);
+
+  // Someone coming within reach is told about once, in view for a few
+  // seconds, the way the flat screen's "Bea is close" chip is: otherwise
+  // the menu's "Ask Bea for" row is only found by opening it on a hunch.
+  const nearbyName = model.together && !model.request && !model.together.waiting ? model.together.name : null;
+  const noticeRef = useRef<THREE.Mesh>(null);
+  const noticeUntilRef = useRef(0);
+  const noticePlacedRef = useRef(false);
+  const notice = useMemo(() => (nearbyName ? makeNoticeTexture(nearbyName, gaze) : null), [nearbyName, gaze, lang]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => notice?.dispose(), [notice]);
+  useEffect(() => {
+    if (!nearbyName || openRef.current) return;
+    noticeUntilRef.current = elapsedRef.current + NOTICE_SECONDS;
+    noticePlacedRef.current = false;
+  }, [nearbyName]);
 
   // Gaze targets (gaze.ts): the Menu button, and the menu's own buttons.
   const layoutRef = useRef(layout);
@@ -340,6 +386,24 @@ function XrHudPanel({ model, session }: { model: XrHudModel; session: XRSession 
         hintMesh.lookAt(head);
       }
     }
+
+    // The "someone's close" notice: ahead and a little low, like the hint,
+    // until it times out or the menu opens.
+    const noticeMesh = noticeRef.current;
+    if (noticeMesh) {
+      const show = elapsedRef.current < noticeUntilRef.current && !openRef.current;
+      if (!show) noticeUntilRef.current = 0;
+      noticeMesh.visible = show;
+      if (show) {
+        flatForward.set(0, 0, -1).applyQuaternion(world.head.quaternion).setY(0);
+        if (flatForward.lengthSq() > 1e-6) flatForward.normalize();
+        const goal = toHead.copy(head).addScaledVector(flatForward, 0.9).addScaledVector(up, -0.2);
+        if (!noticePlacedRef.current) noticeMesh.position.copy(goal);
+        else noticeMesh.position.lerp(goal, 1 - Math.exp(-3 * delta));
+        noticePlacedRef.current = true;
+        noticeMesh.lookAt(head);
+      }
+    }
   });
 
   const toCanvas = (event: ThreeEvent<PointerEvent>) =>
@@ -421,6 +485,10 @@ function XrHudPanel({ model, session }: { model: XrHudModel; session: XRSession 
         <planeGeometry args={[1, 1]} />
         <meshBasicMaterial map={hint} transparent depthTest={false} depthWrite={false} toneMapped={false} />
       </mesh>
+      <mesh ref={noticeRef} visible={false} scale={[0.42, 0.42 * (HINT_HEIGHT / HINT_WIDTH), 1]} renderOrder={1000} raycast={() => null}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial map={notice} transparent depthTest={false} depthWrite={false} toneMapped={false} />
+      </mesh>
       <GazeCursor session={session} />
       {/* Gaze mode's Menu button (see the comment at the top). */}
       <mesh
@@ -478,6 +546,43 @@ function makeGazeButtonTexture(open: boolean): THREE.CanvasTexture {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     fitText(ctx, open ? L("Close", "閉じる") : L("Menu", "メニュー"), GAZE_WIDTH / 2, GAZE_HEIGHT / 2 + 2, GAZE_WIDTH - 60, "600", 64);
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+/** "Bea is close", and how to ask them for a together gesture. */
+function makeNoticeTexture(name: string, gaze: boolean): THREE.CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = HINT_WIDTH;
+  canvas.height = HINT_HEIGHT;
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    ctx.fillStyle = "rgba(18,18,22,0.88)";
+    ctx.beginPath();
+    ctx.roundRect(3, 3, HINT_WIDTH - 6, HINT_HEIGHT - 6, 40);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(232,195,122,0.6)";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const room = HINT_WIDTH - 90;
+    fitText(ctx, L(`${name} is close`, `${name}さんが近くにいます`), HINT_WIDTH / 2, 72, room, "600", 44);
+    ctx.fillStyle = "rgba(255,255,255,0.6)";
+    fitText(
+      ctx,
+      gaze
+        ? L("Open Menu to ask for a high five, a hug, and more", "「メニュー」からハイタッチやハグなどを頼めます")
+        : L("Open the menu (left palm or X) to ask for a high five, a hug…", "メニュー(左手のひらかX)からハイタッチやハグなどを頼めます"),
+      HINT_WIDTH / 2,
+      130,
+      room,
+      "400",
+      36
+    );
   }
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
