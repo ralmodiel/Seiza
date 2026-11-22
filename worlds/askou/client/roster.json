@@ -1,0 +1,455 @@
+{
+ "general": {
+  "name": "UPOU",
+  "personaNames": [
+   "Iska",
+   "iskOU"
+  ]
+ },
+ "bots": [
+  {
+   "key": "accounting",
+   "name": "Accounting Office",
+   "kind": "office",
+   "parentKey": "ovcfa"
+  },
+  {
+   "key": "admissions",
+   "name": "Admissions Guide",
+   "kind": "project",
+   "parentKey": "upou"
+  },
+  {
+   "key": "alumni",
+   "name": "UPOU Alumni Relations",
+   "kind": "office",
+   "parentKey": "opa"
+  },
+  {
+   "key": "budget",
+   "name": "Budget Office",
+   "kind": "office",
+   "parentKey": "oc"
+  },
+  {
+   "key": "cash",
+   "name": "Cash Office",
+   "kind": "office",
+   "parentKey": "ovcfa"
+  },
+  {
+   "key": "cdmo",
+   "name": "Campus Development and Maintenance Office",
+   "kind": "office",
+   "parentKey": "ovcfa"
+  },
+  {
+   "key": "cep",
+   "name": "Continuing Education Program",
+   "kind": "project",
+   "parentKey": "upou"
+  },
+  {
+   "key": "codtl",
+   "name": "Center for Open and Digital Teaching and Learning",
+   "kind": "office",
+   "parentKey": "ovcaa"
+  },
+  {
+   "key": "conferences",
+   "name": "UPOU Conferences",
+   "kind": "project",
+   "parentKey": "upou"
+  },
+  {
+   "key": "fed",
+   "name": "Faculty of Education",
+   "kind": "faculty",
+   "parentKey": "upou"
+  },
+  {
+   "key": "fedaa",
+   "name": "Associate in Arts",
+   "kind": "programme",
+   "parentKey": "fed"
+  },
+  {
+   "key": "fedasidt",
+   "name": "Associate of Science in Instructional Design and Technology",
+   "kind": "programme",
+   "parentKey": "fed"
+  },
+  {
+   "key": "fedbes",
+   "name": "Bachelor of Education Studies",
+   "kind": "programme",
+   "parentKey": "fed"
+  },
+  {
+   "key": "feddlle",
+   "name": "Diploma in Language and Literacy Education",
+   "kind": "programme",
+   "parentKey": "fed"
+  },
+  {
+   "key": "feddmt",
+   "name": "Diploma in Mathematics Teaching",
+   "kind": "programme",
+   "parentKey": "fed"
+  },
+  {
+   "key": "feddsse",
+   "name": "Diploma in Social Studies Education",
+   "kind": "programme",
+   "parentKey": "fed"
+  },
+  {
+   "key": "feddst",
+   "name": "Diploma in Science Teaching",
+   "kind": "programme",
+   "parentKey": "fed"
+  },
+  {
+   "key": "fedgcde",
+   "name": "Graduate Certificate in Distance Education",
+   "kind": "programme",
+   "parentKey": "fed"
+  },
+  {
+   "key": "fedmalle",
+   "name": "Master of Arts in Language and Literacy Education",
+   "kind": "programme",
+   "parentKey": "fed"
+  },
+  {
+   "key": "fedmasse",
+   "name": "Master of Arts in Social Studies Education",
+   "kind": "programme",
+   "parentKey": "fed"
+  },
+  {
+   "key": "fedmde",
+   "name": "Master of Distance Education",
+   "kind": "programme",
+   "parentKey": "fed"
+  },
+  {
+   "key": "fedphd",
+   "name": "Doctor of Philosophy in Education",
+   "kind": "programme",
+   "parentKey": "fed"
+  },
+  {
+   "key": "fics",
+   "name": "Faculty of Information and Communication Studies",
+   "kind": "faculty",
+   "parentKey": "upou"
+  },
+  {
+   "key": "ficsaadda",
+   "name": "Associate of Arts in Digital Design and Arts",
+   "kind": "programme",
+   "parentKey": "fics"
+  },
+  {
+   "key": "ficsasit",
+   "name": "Associate of Science in Information Technology",
+   "kind": "programme",
+   "parentKey": "fics"
+  },
+  {
+   "key": "ficsbams",
+   "name": "Bachelor of Arts in Multimedia Studies",
+   "kind": "programme",
+   "parentKey": "fics"
+  },
+  {
+   "key": "ficsdcomm",
+   "name": "Doctor of Communication",
+   "kind": "programme",
+   "parentKey": "fics"
+  },
+  {
+   "key": "ficsdcs",
+   "name": "Diploma in Computer Science",
+   "kind": "programme",
+   "parentKey": "fics"
+  },
+  {
+   "key": "ficsmdc",
+   "name": "Master of Development Communication",
+   "kind": "programme",
+   "parentKey": "fics"
+  },
+  {
+   "key": "ficsmis",
+   "name": "Master of Information Systems",
+   "kind": "programme",
+   "parentKey": "fics"
+  },
+  {
+   "key": "fmds",
+   "name": "Faculty of Management and Development Studies",
+   "kind": "faculty",
+   "parentKey": "upou"
+  },
+  {
+   "key": "fmdsaade",
+   "name": "Associate of Arts in Digital Entrepreneurship",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "fmdsdenrm",
+   "name": "Diploma in Environment and Natural Resources Management",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "fmdsdih",
+   "name": "Diploma in International Health",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "fmdsdlup",
+   "name": "Diploma in Land Use Planning",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "fmdsdlvm",
+   "name": "Diploma in Land Valuation and Management",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "fmdsdrdm",
+   "name": "Diploma in Research and Development Management",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "fmdsdsus",
+   "name": "Doctor in Sustainability",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "fmdsdsw",
+   "name": "Diploma in Social Work",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "fmdsdwd",
+   "name": "Diploma in Women and Development",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "fmdsgcas",
+   "name": "Graduate Certificate in ASEAN Studies",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "fmdsman",
+   "name": "Master of Arts in Nursing",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "fmdsmas",
+   "name": "Master of ASEAN Studies",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "fmdsmcdr",
+   "name": "Master of Climate and Disaster Resilience",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "fmdsmenrm",
+   "name": "Master of Environment and Natural Resources Management",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "fmdsmih",
+   "name": "Master of International Health",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "fmdsmlvm",
+   "name": "Master of Land Valuation and Management",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "fmdsmne",
+   "name": "Master in Nursing Education",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "fmdsmpm",
+   "name": "Master of Public Management",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "fmdsmrdm",
+   "name": "Master of Research and Development Management",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "fmdsmsw",
+   "name": "Master of Social Work",
+   "kind": "programme",
+   "parentKey": "fmds"
+  },
+  {
+   "key": "hrdo",
+   "name": "Human Resources and Development Office",
+   "kind": "office",
+   "parentKey": "ovcfa"
+  },
+  {
+   "key": "ictdo",
+   "name": "Information and Communication Technology Development Office",
+   "kind": "office",
+   "parentKey": "oc"
+  },
+  {
+   "key": "ijodel",
+   "name": "IJODeL",
+   "kind": "project",
+   "parentKey": "upou"
+  },
+  {
+   "key": "legal",
+   "name": "Office of the Legal Counsel",
+   "kind": "office",
+   "parentKey": "oc"
+  },
+  {
+   "key": "moocs",
+   "name": "UPOU MOOCs",
+   "kind": "project",
+   "parentKey": "upou"
+  },
+  {
+   "key": "networks",
+   "name": "UPOU Open Educational Resources",
+   "kind": "project",
+   "parentKey": "upou"
+  },
+  {
+   "key": "news",
+   "name": "News and Announcements",
+   "kind": "project",
+   "parentKey": "upou"
+  },
+  {
+   "key": "oc",
+   "name": "Office of the Chancellor",
+   "kind": "office",
+   "parentKey": "upou"
+  },
+  {
+   "key": "ogc",
+   "name": "Office of Gender Concerns",
+   "kind": "office",
+   "parentKey": "oc"
+  },
+  {
+   "key": "opa",
+   "name": "Office of Public Affairs",
+   "kind": "office",
+   "parentKey": "oc"
+  },
+  {
+   "key": "osa",
+   "name": "Office of Student Affairs",
+   "kind": "office",
+   "parentKey": "ovcaa"
+  },
+  {
+   "key": "ovcaa",
+   "name": "Office of the Vice Chancellor for Academic Affairs",
+   "kind": "office",
+   "parentKey": "upou"
+  },
+  {
+   "key": "ovcfa",
+   "name": "Office of the Vice Chancellor for Finance and Administration",
+   "kind": "office",
+   "parentKey": "upou"
+  },
+  {
+   "key": "pahinungod",
+   "name": "Office of Ugnayan ng Pahinungód",
+   "kind": "office",
+   "parentKey": "oc"
+  },
+  {
+   "key": "qao",
+   "name": "Quality Assurance Office",
+   "kind": "office",
+   "parentKey": "oc"
+  },
+  {
+   "key": "registrar",
+   "name": "Office of the University Registrar",
+   "kind": "office",
+   "parentKey": "ovcaa"
+  },
+  {
+   "key": "registration",
+   "name": "Registration Guide",
+   "kind": "project",
+   "parentKey": "upou"
+  },
+  {
+   "key": "repository",
+   "name": "UPOU Repository",
+   "kind": "project",
+   "parentKey": "upou"
+  },
+  {
+   "key": "sdg",
+   "name": "SDG Initiatives",
+   "kind": "project",
+   "parentKey": "upou"
+  },
+  {
+   "key": "spmo",
+   "name": "Supply and Property Management Office",
+   "kind": "office",
+   "parentKey": "ovcfa"
+  },
+  {
+   "key": "ulibrary",
+   "name": "University Library",
+   "kind": "office",
+   "parentKey": "ovcaa"
+  },
+  {
+   "key": "webadmin",
+   "name": "Webb Master",
+   "kind": "project",
+   "parentKey": "upou"
+  },
+  {
+   "key": "whatsnew",
+   "name": "What's New in Askou",
+   "kind": "project",
+   "parentKey": "upou"
+  }
+ ]
+}

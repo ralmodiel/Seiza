@@ -1,0 +1,30 @@
+<!--
+  Askou Village's mark: a round, smiling bot under its star, on Seiza's own twilight-into-starfield (the same gradient
+  stops as public/favicon.svg). build.mjs copies this over dist/favicon.svg in this world's build only.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Askou Village">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#070c26"/>
+      <stop offset="42%" stop-color="#1b1546"/>
+      <stop offset="72%" stop-color="#4b2a66"/>
+      <stop offset="92%" stop-color="#a85570"/>
+      <stop offset="100%" stop-color="#e8823f"/>
+    </linearGradient>
+    <clipPath id="frame"><rect width="64" height="64" rx="15"/></clipPath>
+  </defs>
+  <g clip-path="url(#frame)">
+    <rect width="64" height="64" fill="url(#sky)"/>
+    <!-- its star, and the thread of light down to it -->
+    <path d="M32 4 L33.8 9.2 L39 11 L33.8 12.8 L32 18 L30.2 12.8 L25 11 L30.2 9.2 Z" fill="#ffd98a"/>
+    <path d="M32 18 V25" stroke="#ffd98a" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+    <g fill="#fff" opacity="0.8"><circle cx="10" cy="9" r="0.9"/><circle cx="54" cy="7" r="0.8"/><circle cx="49" cy="20" r="0.6"/><circle cx="14" cy="22" r="0.6"/></g>
+    <!-- the bot: maroon body, cream face plate, two eyes and a smile -->
+    <rect x="19" y="44" width="26" height="22" rx="10" fill="#8a1538"/>
+    <rect x="14" y="24" width="36" height="26" rx="12" fill="#fff0c9"/>
+    <rect x="18" y="28" width="28" height="18" rx="8" fill="#2a1630"/>
+    <circle cx="26" cy="36" r="3" fill="#ffd98a"/><circle cx="38" cy="36" r="3" fill="#ffd98a"/>
+    <path d="M27 41 Q32 45 37 41" stroke="#ffd98a" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <circle cx="12.5" cy="37" r="2.5" fill="#f6b90f"/><circle cx="51.5" cy="37" r="2.5" fill="#f6b90f"/>
+  </g>
+</svg>

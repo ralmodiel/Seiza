@@ -46,6 +46,38 @@ function serveWorldFolders(): Plugin {
   };
 }
 
+/**
+ * The Askou world (worlds/askou) asks a running Askou for its bots and their answers. In development the three calls
+ * the village makes go to ASKOU_URL; nothing is forwarded when it is not set (no address of another project lives in
+ * this file). Anything else under /askou/api/ is a 404 here: the rest of Askou (reactions, erasing a conversation,
+ * its admin API) is not reachable through this server.
+ * A village visitor is anonymous to Askou: cookies and credentials are not passed on, Askou's cookies are not passed
+ * back, and X-Chat-Log (the header that asks Askou to record a conversation) is dropped whoever sends it.
+ * ASKOU_TEST=1 marks every forwarded request as a test, which Askou records nowhere: set it for QA and automation.
+ */
+const ASKOU_CALLS: Record<string, string> = { "/askou/api/bot": "GET", "/askou/api/bot/characters": "GET", "/askou/api/chat": "POST" };
+function askouProxy(): Record<string, import("vite").ProxyOptions> {
+  const target = process.env.ASKOU_URL;
+  if (!target) return {};
+  const test = process.env.ASKOU_TEST === "1";
+  return {
+    "^/askou/api(/|$)": {
+      target,
+      changeOrigin: true,
+      rewrite: (path) => path.replace(/^\/askou/, ""),
+      // the path as sent, not normalised: "/askou/api/chat/../x" is not one of the three calls
+      bypass: (request) => (ASKOU_CALLS[(request.url ?? "").split("?")[0]] === request.method ? undefined : false),
+      configure: (proxy) => {
+        proxy.on("proxyReq", (request) => {
+          for (const header of ["cookie", "authorization", "x-chat-log"]) request.removeHeader(header);
+          if (test) request.setHeader("X-Askou-Test", "1");
+        });
+        proxy.on("proxyRes", (response) => void delete response.headers["set-cookie"]);
+      },
+    },
+  };
+}
+
 // Static frontend dev server only. The Worker (worker/index.ts, which
 // also hosts the room server as a bound Durable Object — worker/room.ts)
 // runs separately via `npm run worker:dev` — see DOCS.md's "Local
@@ -61,6 +93,7 @@ export default defineConfig({
     proxy: {
       "/api": { target: "http://127.0.0.1:8787", changeOrigin: true },
       "/rooms": { target: "ws://127.0.0.1:8787", ws: true, changeOrigin: true },
+      ...askouProxy(),
     },
   },
 });
