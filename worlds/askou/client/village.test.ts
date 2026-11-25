@@ -3,6 +3,7 @@ import { layoutVillage, ROOT } from "./layout";
 import { SNAPSHOT, toBots } from "./api";
 import { botsIn, parseReply } from "./reply";
 import { aimAt, cameraAt, pairMid, setTravel, standBy, standWith, startersOf, taglineOf, type Message } from "./store";
+import { figureFor } from "./figures/figures";
 import { groupsOf } from "./VillageHud";
 import { answerParts, panelText } from "./VillageXr";
 
@@ -70,6 +71,11 @@ describe("the village", () => {
     expect(taglineOf({ ...fmds, tagline: null })).toBe("Managing the world, one good decision at a time.");
     expect(taglineOf({ ...fmds, tagline: "Ours." })).toBe("Ours.");
     expect(taglineOf({ ...fmds, key: "no-such-bot", tagline: null })).toBeNull();
+  });
+
+  it("gives the project animals their animal, and every other bot none", () => {
+    expect(["bantay", "mingming", "lila"].map((k) => figureFor(k).animal)).toEqual(["dog", "cat", "heron"]);
+    expect(figureFor("webadmin").animal).toBeUndefined();
   });
 
   it("lists every bot once in the directory, the general bot first", () => {

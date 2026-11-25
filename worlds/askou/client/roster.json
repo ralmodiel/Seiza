@@ -26,6 +26,12 @@
    "parentKey": "opa"
   },
   {
+   "key": "bantay",
+   "name": "Bantay the Study Dog",
+   "kind": "project",
+   "parentKey": "upou"
+  },
+  {
    "key": "budget",
    "name": "Budget Office",
    "kind": "office",
@@ -336,6 +342,18 @@
    "name": "Office of the Legal Counsel",
    "kind": "office",
    "parentKey": "oc"
+  },
+  {
+   "key": "lila",
+   "name": "Lila the Purple Heron",
+   "kind": "project",
+   "parentKey": "sdg"
+  },
+  {
+   "key": "mingming",
+   "name": "Mingming the Study Cat",
+   "kind": "project",
+   "parentKey": "upou"
   },
   {
    "key": "moocs",

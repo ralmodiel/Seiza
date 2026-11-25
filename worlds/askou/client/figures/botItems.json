@@ -72,5 +72,8 @@
 "news": ["megaphone", "newspaper", "calendar", "envelope"],
 "admissions": ["clipboard", "envelope", "gradcap", "signpost"],
 "registration": ["checkshield", "calendar", "idcard", "receipt"],
-"webadmin": ["screen", "wrench", "magnifier", "clipboard"]
+"webadmin": ["screen", "wrench", "magnifier", "clipboard"],
+"bantay": ["tag", "heart", "lifebuoy", "ribbon"],
+"mingming": ["box", "magnifier", "heart", "ribbon"],
+"lila": ["sapling", "leaf", "waterdrop", "solar"]
 }

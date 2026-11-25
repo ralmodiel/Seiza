@@ -81,4 +81,7 @@ export const TAGLINES: Record<string, string | undefined> = {
   admissions: 'From "Can I apply?" to "You\'re in!", step by step.',
   registration: 'Your term, sorted: enlist, pay, confirm, repeat.',
   webadmin: 'Takes notes on UPOU sites, and tells on his bot pals.',
+  bantay: 'A loyal aspin who fetches answers for you.',
+  mingming: 'A curious cat who finds what you lost.',
+  lila: 'A rare purple heron who wades into the SDGs.',
 }

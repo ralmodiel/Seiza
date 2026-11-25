@@ -48,7 +48,7 @@ export const FAMILIES: Record<Family, { label: string; shades: string[] }> = {
 export type Look = 'fem' | 'masc' | 'neutral'
 /** no = the unit number on its chest display or name plate (1..99). */
 /** trim = the colour of the dark parts (sensor fin, thruster nozzle) when it is not a darker body colour. */
-export interface FigureSpec { family: Family; shape: Shape; prop: Prop; accent: Accent; hat: Hat; head: Head; build: Build; body: string; no: number; nick?: string; trim?: string; look: Look; /** which variant of the look's styling (fem: 0 bob, 1 up-do, 2 the chancellor's; neutral: 0-2) */ vary: number }
+export interface FigureSpec { family: Family; shape: Shape; prop: Prop; accent: Accent; hat: Hat; head: Head; build: Build; body: string; no: number; nick?: string; trim?: string; look: Look; /** a pet: ears, snout, whiskers and a tail on the robot (components/figures3d) */ animal?: 'dog' | 'cat' | 'heron'; /** which variant of the look's styling (fem: 0 bob, 1 up-do, 2 the chancellor's; neutral: 0-2) */ vary: number }
 
 /** nick = the bot's own name: the speaker in its chat bubbles and the big label of its tile. */
 type Row = [nick: string, prop: Prop, accent: Accent, hat?: Hat]
@@ -145,6 +145,10 @@ const TABLE: Record<Family, { shape: Shape; later?: boolean; rows: Record<string
     admissions: ['Addie Mission', 'clipboard', 'gold'],            // Admissions Guide
     registration: ['Enzo Rollment', 'checkshield', 'sky', 'fin'],  // Registration Guide
     webadmin: ['Webb', 'screen', 'lilac'],                         // Webb Master: feedback on the UPOU sites and on the other bots
+  } }, { shape: 'office', later: true, rows: {
+    bantay: ['Bantay', 'heart', 'coral'],                          // the dog (an admin-created project bot)
+    mingming: ['Mingming', 'star', 'lilac'],                       // the cat (an admin-created project bot)
+    lila: ['Lila', 'sapling', 'lime'],                             // the purple heron (an admin-created project bot under sdg)
   } }],
 }
 
@@ -196,13 +200,18 @@ export function blink(u: number, seed: number): number {
   return Math.min(one(b), (r >>> 10) % 4 ? 1 : one(b - 0.3))
 }
 
+/** The pets: their fur is the body colour (a tan aspin, a grey tabby; dark enough for white initials) on a head of their own. */
+const PETS: Partial<Record<string, Pick<FigureSpec, 'animal' | 'body' | 'head' | 'hat'> & { build?: FigureSpec['build'] }>> = {
+  bantay: { animal: 'dog', body: '#8b5a2b', head: 'sphere', hat: 'none' }, mingming: { animal: 'cat', body: '#5f6670', head: 'dome', hat: 'none' },
+  lila: { animal: 'heron', body: '#5e4a6e', head: 'capsule', hat: 'none', build: 'slim' }, // a purple heron on long legs
+}
 const KNOWN = new Map<string, FigureSpec>()
 let dealt = 0
 const shade: Partial<Record<Family, number>> = {}
 for (const late of [false, true]) for (const family of Object.keys(TABLE) as Family[]) {
   for (const { shape, rows, later } of TABLE[family]) if (!!later === late) for (const [key, [nick, prop, accent, hat]] of Object.entries(rows)) {
     const shades = FAMILIES[family].shades, i = shade[family] = (shade[family] ?? -1) + 1
-    KNOWN.set(key, { nick, no: dealt + 1, family, shape, prop, accent, hat: hat ?? (shape === 'faculty' ? 'mortar' : shape === 'office' ? 'none' : 'fin'), head: key === 'oc' ? 'drop' /* the chancellor: the swept-up head carries her up-do */ : HEADS[(dealt * 3 + 2 * (dealt >> 4)) % HEADS.length], build: BUILDS[(dealt + (dealt++ >> 2)) % BUILDS.length], body: shades[i % shades.length], ...styleOf(key) })
+    KNOWN.set(key, { nick, no: dealt + 1, family, shape, prop, accent, hat: hat ?? (shape === 'faculty' ? 'mortar' : shape === 'office' ? 'none' : 'fin'), head: key === 'oc' ? 'drop' /* the chancellor: the swept-up head carries her up-do */ : HEADS[(dealt * 3 + 2 * (dealt >> 4)) % HEADS.length], build: BUILDS[(dealt + (dealt++ >> 2)) % BUILDS.length], body: shades[i % shades.length], ...styleOf(key), ...PETS[key] })
   }
 }
 export const KNOWN_KEYS = [...KNOWN.keys()]

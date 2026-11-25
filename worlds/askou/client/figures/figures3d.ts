@@ -499,34 +499,34 @@ const WEDP: [number, number][] = [[-0.62, 0.4], [0.62, 0.4], [0.34, -0.36], [-0.
 interface Skull { g: Geo; hw: number; top: number; ey: number; ez: number; es: number; rc: number; fs: number; bz: number }
 /** The 8 head forms in coordinates of the neck joint: white plating with the family colour as a panel, and a glass visor
  *  that follows the form (porthole on a ball, band round a drum, arch on a dome, the head's own outline on a flat front). */
-function skull(form: Head, c: string, face: string): Skull {
+function skull(form: Head, c: string, face: string, plate = PLATE): Skull { // plate = the shell colour (a pet: its fur)
   const g = N()
   const flat = (key: string, pts: [number, number][], y: number, vs: V3) => {
     const shell = ext(key, () => poly(pts), 0.56, 0.07), pane = ext(key, () => poly(pts), 0.06, 0.02)
-    g.add(shell, PLATE, { p: [0, y, 0] }).add(shell, c, { p: [0, y, -0.14], s: [1.03, 1.03, 0.52] }).add(pane, face, { p: [0, y + 0.02, 0.28], s: vs }).add(pane, SEAM, { p: [0, y + 0.02, 0.268], s: [vs[0] + 0.05, vs[1] + 0.05, 1] })
+    g.add(shell, plate, { p: [0, y, 0] }).add(shell, c, { p: [0, y, -0.14], s: [1.03, 1.03, 0.52] }).add(pane, face, { p: [0, y + 0.02, 0.28], s: vs }).add(pane, SEAM, { p: [0, y + 0.02, 0.268], s: [vs[0] + 0.05, vs[1] + 0.05, 1] })
   }
   switch (form) {
     case 'hex': flat('hdh', HEXP, 0.38, [0.74, 0.66, 1]); return { g, hw: 0.58, top: 0.8, ey: 0.39, ez: 0.32, es: 0.17, rc: 0, fs: 1, bz: 0.3 }
     case 'wedge': flat('hdw', WEDP, 0.36, [0.76, 0.62, 1]); return { g, hw: 0.47, top: 0.76, ey: 0.39, ez: 0.32, es: 0.17, rc: 0, fs: 1, bz: 0.3 }
     case 'capsule':
-      g.add(sphHi, PLATE, { p: [0, 0.28, 0], s: 0.31 }).add(cyl, PLATE, { p: [0, 0.42, 0], s: [0.31, 0.28, 0.31] }).add(sphHi, PLATE, { p: [0, 0.56, 0], s: 0.31 }).add(cyl, c, { p: [0, 0.63, 0], s: [0.318, 0.06, 0.318] })
+      g.add(sphHi, plate, { p: [0, 0.28, 0], s: 0.31 }).add(cyl, plate, { p: [0, 0.42, 0], s: [0.31, 0.28, 0.31] }).add(sphHi, plate, { p: [0, 0.56, 0], s: 0.31 }).add(cyl, c, { p: [0, 0.63, 0], s: [0.318, 0.06, 0.318] })
         .add(sphHi, c, { p: [0, 0.74, 0], s: [0.2, 0.14, 0.2] }).add(sphHi, face, { p: [0, 0.36, 0.15], s: [0.25, 0.25, 0.2] }).add(sphHi, SEAM, { p: [0, 0.36, 0.15], s: [0.268, 0.268, 0.172] })
       return { g, hw: 0.31, top: 0.87, ey: 0.37, ez: 0.355, es: 0.11, rc: 0.3, fs: 0.84, bz: 0.31 }
     case 'saucer':
-      g.add(sphHi, PLATE, { p: [0, 0.3, 0], s: [0.68, 0.26, 0.5] }).add(cyl, c, { p: [0, 0.3, -0.03], s: [0.7, 0.05, 0.5] }).add(sphHi, c, { p: [0, 0.5, 0], s: [0.36, 0.1, 0.28] }).add(sphHi, face, { p: [0, 0.31, 0.25], s: [0.5, 0.19, 0.3] }).add(sphHi, SEAM, { p: [0, 0.31, 0.25], s: [0.525, 0.208, 0.262] })
+      g.add(sphHi, plate, { p: [0, 0.3, 0], s: [0.68, 0.26, 0.5] }).add(cyl, c, { p: [0, 0.3, -0.03], s: [0.7, 0.05, 0.5] }).add(sphHi, c, { p: [0, 0.5, 0], s: [0.36, 0.1, 0.28] }).add(sphHi, face, { p: [0, 0.31, 0.25], s: [0.5, 0.19, 0.3] }).add(sphHi, SEAM, { p: [0, 0.31, 0.25], s: [0.525, 0.208, 0.262] })
       return { g, hw: 0.68, top: 0.57, ey: 0.31, ez: 0.555, es: 0.2, rc: 0.6, fs: 0.8, bz: 0 }
     case 'drum':
-      g.add(cyl, PLATE, { p: [0, 0.33, 0], s: [0.43, 0.66, 0.43] }).add(cyl, face, { p: [0, 0.36, 0], s: [0.445, 0.4, 0.445] }).add(cyl, SEAM, { p: [0, 0.36, 0], s: [0.438, 0.43, 0.438] }).add(cyl, c, { p: [0, 0.67, 0], s: [0.44, 0.07, 0.44] }).add(cyl, c, { p: [0, 0.03, 0], s: [0.44, 0.07, 0.44] })
+      g.add(cyl, plate, { p: [0, 0.33, 0], s: [0.43, 0.66, 0.43] }).add(cyl, face, { p: [0, 0.36, 0], s: [0.445, 0.4, 0.445] }).add(cyl, SEAM, { p: [0, 0.36, 0], s: [0.438, 0.43, 0.438] }).add(cyl, c, { p: [0, 0.67, 0], s: [0.44, 0.07, 0.44] }).add(cyl, c, { p: [0, 0.03, 0], s: [0.44, 0.07, 0.44] })
       return { g, hw: 0.43, top: 0.7, ey: 0.36, ez: 0.45, es: 0.17, rc: 0.445, fs: 0.95, bz: 0.45 }
     case 'dome':
-      g.add(dome, PLATE, { p: [0, 0.04, 0], s: [0.5, 0.66, 0.5] }).add(cyl, c, { p: [0, 0.02, 0], s: [0.6, 0.1, 0.58] }).add(cyl, GRAPH, { p: [0, 0.08, 0], s: [0.52, 0.03, 0.52] }).add(dome, face, { p: [0, 0.12, 0.29], s: [0.37, 0.44, 0.22] }).add(dome, SEAM, { p: [0, 0.12, 0.29], s: [0.395, 0.465, 0.19] })
+      g.add(dome, plate, { p: [0, 0.04, 0], s: [0.5, 0.66, 0.5] }).add(cyl, c, { p: [0, 0.02, 0], s: [0.6, 0.1, 0.58] }).add(cyl, GRAPH, { p: [0, 0.08, 0], s: [0.52, 0.03, 0.52] }).add(dome, face, { p: [0, 0.12, 0.29], s: [0.37, 0.44, 0.22] }).add(dome, SEAM, { p: [0, 0.12, 0.29], s: [0.395, 0.465, 0.19] })
       return { g, hw: 0.46, top: 0.7, ey: 0.3, ez: 0.5, es: 0.16, rc: 0.45, fs: 1, bz: 0.29 }
     case 'drop':
-      g.add(lathe('drop', [[0.001, -0.04], [0.28, -0.02], [0.44, 0.1], [0.5, 0.27], [0.46, 0.44], [0.34, 0.62], [0.18, 0.8], [0.06, 0.92], [0.001, 0.96]]), PLATE, { s: [1, 0.9, 1] })
+      g.add(lathe('drop', [[0.001, -0.04], [0.28, -0.02], [0.44, 0.1], [0.5, 0.27], [0.46, 0.44], [0.34, 0.62], [0.18, 0.8], [0.06, 0.92], [0.001, 0.96]]), plate, { s: [1, 0.9, 1] })
         .add(lathe('tip', [[0.125, 0.86], [0.065, 0.92], [0.001, 0.965]]), GRAPH, { s: [1, 0.9, 1] }).add(sphHi, c, { p: [0, 0.24, -0.1], s: [0.52, 0.3, 0.44] }).add(sphHi, face, { p: [0, 0.27, 0.3], s: [0.34, 0.26, 0.21] }).add(sphHi, SEAM, { p: [0, 0.27, 0.3], s: [0.362, 0.28, 0.18] })
       return { g, hw: 0.48, top: 0.86, ey: 0.27, ez: 0.51, es: 0.16, rc: 0.45, fs: 1, bz: 0.36 }
     default:
-      g.add(sphHi, PLATE, { p: [0, 0.36, 0], s: 0.48 }).add(sphHi, c, { p: [0, 0.36, -0.14], s: [0.495, 0.49, 0.42] }).add(sphHi, face, { p: [0, 0.34, 0.27], s: [0.36, 0.33, 0.23] }).add(sphHi, SEAM, { p: [0, 0.34, 0.27], s: [0.382, 0.352, 0.2] })
+      g.add(sphHi, plate, { p: [0, 0.36, 0], s: 0.48 }).add(sphHi, c, { p: [0, 0.36, -0.14], s: [0.495, 0.49, 0.42] }).add(sphHi, face, { p: [0, 0.34, 0.27], s: [0.36, 0.33, 0.23] }).add(sphHi, SEAM, { p: [0, 0.34, 0.27], s: [0.382, 0.352, 0.2] })
       return { g, hw: 0.48, top: 0.84, ey: 0.34, ez: 0.495, es: 0.17, rc: 0.4, fs: 1, bz: 0.42 }
   }
 }
@@ -551,7 +551,7 @@ function digits(g: Geo, hex: string, n: string, x: number, y: number, z: number,
 }
 /** open = how far the eyelids are open, shape = which mouth shows (both for probes). `act` takes the real clock, how excited the
  *  figure is, its moods (typing, thinking, happy, miss), dn = how delighted (dancing, playing) and live = false for a still picture. */
-interface Face { face: THREE.Group; open: number; shape: string; act: (u: number, e: number, ty: number, th: number, ha: number, mi: number, dn: number, live: boolean) => void; sing: (open: number) => void }
+interface Face { face: THREE.Group; open: number; shape: string; act: (u: number, e: number, ty: number, th: number, ha: number, mi: number, dn: number, live: boolean, lids?: number) => void; sing: (open: number) => void }
 /** Where the eyes of the figure being drawn look, -1..1 across and up (the pointer, see mount), and k = how much they follow it. */
 export const gaze = { x: 0, y: 0, k: 0 }
 const ARC = (n: number, half = false): [number, number][] => Array.from({ length: n }, (_, i) => { const a = i * (half ? PI : TAU) / (half ? n - 1 : n); return [Math.cos(a), Math.sin(a) - (half ? 1 : 0)] })
@@ -614,8 +614,8 @@ function faceRig(es: number, rc: number, st: FaceStyle, o: { look?: Look; iris: 
   return {
     face, open: 1, shape: 'rest',
     sing(open) { sung = open },
-    act(u, e, ty, th, ha, mi, dn, live) {
-      const op = this.open = live ? blink(u, st.seed) : 1, x = Math.min(1, e), glad = Math.max(ha, dn)
+    act(u, e, ty, th, ha, mi, dn, live, lids = 0) {
+      const op = this.open = Math.min(live ? blink(u, st.seed) : 1, 1 - lids), x = Math.min(1, e), glad = Math.max(ha, dn)
       const laugh = dn > 0.5 && u % 4 < 1.2 // delighted: the eyes shut in a laugh now and then
       shut.visible = laugh; balls.visible = iris.visible = !laugh
       // the lids: the upper one droops in thought and at a loss, the lower one rises with a smile; a blink brings them together
@@ -694,6 +694,33 @@ function dance(k: number, t: number, d: number) {
     case 4: { const low = Math.sin(PI * seg(t, 0.2, 0.8)) // the twist: the body swivels under a head that keeps looking ahead, sinking low and coming up again
       mv.ry = 0.3 * h * sw; mv.hy = -0.26 * h * sw; mv.lx = 0.45 * h * sw; mv.la = -0.32 * h; mv.ra = -0.08 * h * sw; mv.hx = 0.08 * h * bob; mv.dip = 0.3 * h * bob + 1.2 * h * low; break }
     default: mv.ry = 0.5 * h; mv.bx = 0.12 * h * Math.cos(PI * seg(t, 0.16, 0.84)); mv.rz = 0.035 * h * sw; mv.hx = 0.12 * h * bob; mv.lx = -0.38 * h * sw; mv.la = -0.15 * h; mv.dip = 0.45 * h * bob // the glide: side on, sliding backwards on the beat
+  }
+}
+/** The animals' acts, on the show's timing and act table (a pet plays no instrument and waves no hand): five moves each, act p
+ *  doing move p % 5. Writes `mv` as a dance does, and `pm`: rx = lean forward, wag = tail (wag, swish), fluff = the heron's crest
+ *  raised, step = which leg the heron stands on (0 left, 1 right), shut = eyelids closed (the cat's slow blink). */
+const pm = { rx: 0, wag: 0, fluff: 0, step: 0, shut: 0 }
+function petAct(pet: 'dog' | 'cat' | 'heron', k: number, t: number, d: number) {
+  const b = t * d * 2, h = seg(t, 0.05, 0.15) - seg(t, 0.86, 0.96), sw = Math.sin(H * Math.cos(PI * b)), bob = 0.5 + 0.5 * Math.cos(TAU * b)
+  const hold = (a: number, z: number) => seg(t, a, a + 0.15) - seg(t, z, z + 0.15) // in at a, out at z
+  mv.ry = mv.rz = mv.bx = mv.up = mv.hy = mv.hx = mv.hz = mv.la = mv.lx = mv.ra = mv.py = mv.turn = mv.dip = 0
+  pm.rx = pm.wag = pm.fluff = pm.step = pm.shut = 0
+  switch (`${pet}${k}`) {
+    case 'dog0': pm.wag = h; mv.rz = 0.05 * h * sw; mv.hz = 0.12 * h * sw; mv.dip = 0.3 * h * bob; break // a happy wag, the back end wiggling
+    case 'dog1': { const g = hold(0.12, 0.72); pm.rx = 0.38 * g; mv.hx = -0.4 * g; mv.dip = 0.7 * g; pm.wag = g; break } // a play bow: chest down, head up, tail going
+    case 'dog2': mv.turn = 2 * seg(t, 0.12, 0.88); mv.hx = 0.18 * h; mv.hy = 0.35 * h; pm.wag = h; mv.up = 0.03 * h * bob; break // chases its tail, twice round
+    case 'dog3': { const hop = Math.abs(Math.sin(PI * b)); mv.up = 0.18 * h * hop; mv.dip = 0.9 * h * (1 - hop) ** 4; pm.wag = h; break } // hops on the beat
+    case 'dog4': mv.hz = 0.4 * h * Math.sin(H * Math.cos(PI * seg(t, 0.25, 0.75))); mv.hx = -0.1 * h; pm.wag = 0.4 * h; break // tilts its head one way, then the other
+    case 'cat0': { const g = hold(0.1, 0.65); pm.rx = 0.32 * g; mv.dip = -0.9 * g; mv.hx = -0.3 * g; pm.wag = g; break } // a stretch: leans forward, back arched, tail up
+    case 'cat1': pm.wag = h; mv.hy = -0.3 * h * sw; mv.rz = 0.03 * h * sw; break // tail swishes; it looks back at it
+    case 'cat2': mv.la = -0.5 * h - 0.5 * h * Math.max(0, Math.sin(TAU * b)); mv.lx = -0.3 * h; mv.hx = 0.18 * h; mv.hz = 0.08 * h * sw; break // bats at something with a paw, watching it
+    case 'cat3': { const g = hold(0.1, 0.78); mv.dip = 1.8 * g; mv.up = -0.04 * g; pm.wag = 0.4 * g; mv.hz = 0.06 * g * sw; break } // sits down, tail curled
+    case 'cat4': pm.shut = hold(0.25, 0.6); mv.hx = 0.1 * pm.shut; mv.hz = 0.08 * h; break // a slow blink: the cat's "I like you"
+    case 'heron0': mv.hz = 0.3 * h * sw; mv.hy = 0.15 * h * sw; mv.bx = 0.05 * h * sw; break // sways its neck and head
+    case 'heron1': { const f = Math.abs(Math.sin(TAU * b)); mv.la = -1.3 * h * f; mv.ra = 0.35 * h * f; mv.up = 0.06 * h * f; pm.fluff = 0.4 * h; break } // flaps its wings
+    case 'heron2': { const s = seg(t, 0.4, 0.6); pm.step = s > 0.5 ? 1 : 0; mv.up = 0.1 * Math.sin(PI * s) * h; mv.rz = 0.07 * h * (1 - 2 * s); break } // steps from one leg onto the other
+    case 'heron3': { const g = hold(0.15, 0.7); pm.rx = 0.25 * g; mv.hx = 0.65 * g; break } // a bow, the neck dipping
+    default: pm.fluff = h * (0.6 + 0.4 * Math.abs(Math.sin(TAU * b))); mv.hz = 0.1 * h * sw; mv.hx = -0.12 * h // fluffs its crest
   }
 }
 /** The performances (acts 12-15), on the same beat and without a sound: the bot takes out an instrument, plays and puts it away.
@@ -821,6 +848,7 @@ function build(f: FigureSpec): Fig {
   // A friendly service robot: white plating, the family colour as panels, graphite joints, a glass visor with LED eyes
   // and smile. No chest light: a pulsing lamp on the tummy read as flashing. `lights` = everything unlit besides the face.
   const torso = N(), lights = N(), led = mix(a, W, 0.25)
+  const pet = f.animal, fur = pet === 'dog' ? '#d6a46a' : pet === 'cat' ? '#a4a9b1' : pet === 'heron' ? '#b5653d' : PLATE
   let sx = 0.48, chest: V3 = [0, 0.82, 0.335], front = 0.33 // front = z of the front of the chest
   const legs = (x: number, hip: number) => { for (const s of [-1, 1]) {
     torso.add(dome, PLATE, { p: [s * (x + 0.01), 0, 0.05], s: [0.19, 0.14, 0.26] }).add(cyl, GRAPH, { p: [s * x, hip / 2, 0], s: [0.07, hip, 0.07] }).add(sph, GRAPH, { p: [s * x, hip, 0], s: 0.1 })
@@ -848,7 +876,7 @@ function build(f: FigureSpec): Fig {
       sx = 0.42; chest = [0, 0.53, 0.19]; fz = 0.215; dy = 0.94
       torso.add(rr(0.68, 0.34, 0.12, 0.42, 0.05), c, { p: [0, 0.94, 0] }).add(cyl, GRAPH, { p: [0, 0.69, 0], s: [0.11, 0.22, 0.11] }).add(cyl, PLATE, { p: [0, 0.73, 0], s: [0.15, 0.04, 0.15] }).add(cyl, PLATE, { p: [0, 0.66, 0], s: [0.15, 0.04, 0.15] })
         .add(rr(0.46, 0.18, 0.08, 0.36, 0.04), c, { p: [0, 0.53, 0] })
-      legs(0.15, 0.42)
+      if (pet !== 'heron') legs(0.15, 0.42) // the heron stands on stilts (below)
     } else { // a pod on a thruster
       sx = 0.5; chest = [0, 0.66, 0.29]
       torso.add(rr(0.82, 0.58, 0.26, 0.56, 0.09), c, { p: [0, 0.84, 0] }).add(box, GRAPH, { p: [0, 0.74, 0], s: [0.835, 0.02, 0.575] })
@@ -860,34 +888,73 @@ function build(f: FigureSpec): Fig {
       .add(bolt, GREY, { p: [s * (sx - 0.07), 1.06, 0.215], r: [H, 0, 0], s: [0.028, 0.02, 0.028] })
   }
   torso.add(cyl, GRAPH, { p: [0, 1.2, 0], s: [0.12, 0.14, 0.12] })
+  if (pet === 'dog') torso.add(tor(sx * 0.82, 0.055), RED, { p: [0, 1.09, 0], r: [H, 0, 0], s: [1, 0.72, 1] }).add(cyl, GOLD, { p: [0, 0.98, front + 0.04], r: [H, 0, 0], s: [0.06, 0.02, 0.06] }) // a red collar with a tag
   // The look (lib/figures.ts) is drawn on the head only; the chest carries no jewelry or tie. Shoulders a little narrower (fem) or wider (masc).
   const fem = f.look === 'fem', masc = f.look === 'masc', grand = fem && f.vary === 2
   if (f.look === 'neutral' && f.vary === 2) torso.add(cyl, PLATE, { p: [0, 1.16, 0], s: [0.18, 0.04, 0.18] }) // a plain neck gasket
   const body = torso.mesh(), wide = fem ? 0.94 : masc ? 1.04 : 1
   body.scale.x = wide; sx *= wide
 
-  const skin = faceOf(f).seed % 3 ? FACE : TAN, sk = skull(f.head, c, skin), head = sk.g, top = sk.top
+  const skin = faceOf(f).seed % 3 ? FACE : TAN, sk = skull(f.head, c, skin, fur), head = sk.g, top = sk.top
   // On the head: fem a swept helmet shell in the dark body colour, as a bob to the jaw (vary 0) or swept up into a bun; masc a short
   // cropped crest over the visor. Nothing below the face (anything there reads as a beard). Neutral: at most a plain sensor stud.
   const hz = sk.rc ? sk.ez : 0.3, by = sk.ey + 0.3 * sk.fs
-  if (fem) {
+  if (fem && !pet) {
     head.add(sphHi, dk, { p: [0, top * 0.55, -hz * 0.35], s: [sk.hw + 0.05, top * 0.48, hz * 0.85] })
     if (f.vary && f.hat !== 'mortar') head.add(sphHi, dk, { p: [0, top - 0.06, -hz * 0.7], s: [0.2, 0.15, 0.2] }).add(tor(0.15, 0.02), grand ? GOLD : a, { p: [0, top - 0.13, -hz * 0.7], r: [H, 0, 0] }) // a plate cap sits where the bun would
     else for (const s of [-1, 1]) head.add(rr(0.16, 0.44, 0.07, 0.3), dk, { p: [s * (Math.min(sk.hw, 0.52) + 0.02), 0.24, -0.1], r: [0, 0, s * 0.1] })
   }
-  if (masc && sk.bz) for (const i of [-2, -1, 0, 1, 2]) { const w = (sk.es + 0.1) * 0.4, o = onFace(i * w, 0, sk.rc * sk.bz / sk.ez); head.add(box, dk, { p: [o.p[0], by, sk.bz + o.p[2]], r: o.r, s: [w * 1.1, 0.07, 0.08] }) }
-  if (f.look === 'neutral' && f.vary === 1 && sk.bz) head.add(cyl, GREY, { p: [0, by, sk.bz], r: [H, 0, 0], s: [0.045, 0.05, 0.045] })
-  if (f.hat !== 'headphones' && f.head !== 'saucer') for (const s of [-1, 1]) head.add(cyl, GRAPH, { p: [s * (sk.hw - 0.02), 0.34, 0], r: [0, 0, H], s: [0.11, 0.07, 0.11] }).add(bolt, GREY, { p: [s * (sk.hw + 0.02), 0.34, 0], r: [0, 0, H], s: [0.05, 0.03, 0.05] }).add(box, a, { p: [s * (sk.hw + 0.045), 0.44, -0.02], s: [0.03, 0.24, 0.12] })
+  if (masc && sk.bz && !pet) for (const i of [-2, -1, 0, 1, 2]) { const w = (sk.es + 0.1) * 0.4, o = onFace(i * w, 0, sk.rc * sk.bz / sk.ez); head.add(box, dk, { p: [o.p[0], by, sk.bz + o.p[2]], r: o.r, s: [w * 1.1, 0.07, 0.08] }) }
+  if (f.look === 'neutral' && f.vary === 1 && sk.bz && !pet) head.add(cyl, GREY, { p: [0, by, sk.bz], r: [H, 0, 0], s: [0.045, 0.05, 0.045] })
+  if (f.hat !== 'headphones' && f.head !== 'saucer' && !pet) for (const s of [-1, 1]) head.add(cyl, GRAPH, { p: [s * (sk.hw - 0.02), 0.34, 0], r: [0, 0, H], s: [0.11, 0.07, 0.11] }).add(bolt, GREY, { p: [s * (sk.hw + 0.02), 0.34, 0], r: [0, 0, H], s: [0.05, 0.03, 0.05] }).add(box, a, { p: [s * (sk.hw + 0.045), 0.44, -0.02], s: [0.03, 0.24, 0.12] })
   const glasses = f.shape === 'faculty'
   const rig = faceRig(sk.es, sk.rc, faceOf(f), { look: f.look, iris: mix(a, c, 0.5), lid: mix(skin, c, 0.4), tint: mix(a, W, 0.75), vh: f.head === 'saucer' ? 0.2 : f.head === 'drum' ? 0.215 : 0.27, cap: glasses ? 0.1 : undefined }), face = piv(rig.face, [0, sk.ey, sk.ez])
   face.scale.setScalar(sk.fs)
   if (glasses) face.add(piv(pair(N(), tor(Math.min(0.125, sk.es - 0.012), 0.018), GRAPH, sk.es, sk.rc, 1).stroke(GRAPH, -0.04, 0.01, 0.04, 0.01, 0, 0.02, 0.02), [0, 0.04, 0.03])) // the professor's glasses, as frames on the visor
-  const hd = piv(G(head, face), [0, 1.2, 0]), cap = f.head === 'drop' && f.hat === 'fin' ? null : hat(f.hat, a, dk, top, sk.hw) // a pointed head is its own fin
-  const hs = f.shape === 'faculty' ? 1.16 : 1.12 // a head a little too large for its body: the face reads on a small tile
+  const neckY = pet === 'heron' ? 1.62 : 1.2, hd = piv(G(head, face), [0, neckY, 0]), cap = f.head === 'drop' && f.hat === 'fin' ? null : hat(f.hat, a, dk, top, sk.hw) // a pointed head is its own fin
+  const hs = pet === 'heron' ? 0.85 : f.shape === 'faculty' ? 1.16 : 1.12 // a head a little too large for its body: the face reads on a small tile
   hd.scale.setScalar(hs)
   let aerial: THREE.Group | undefined // light head gear sways after the head; a cap sits still
-  if (f.shape === 'office' && f.hat === 'none') hd.add(N().add(dome, led, { p: [0, top, 0], s: [0.1, 0.07, 0.1] }).mesh(GLOW))
+  if (f.shape === 'office' && f.hat === 'none' && !pet) hd.add(N().add(dome, led, { p: [0, top, 0], s: [0.1, 0.07, 0.1] }).mesh(GLOW))
   if (cap) hd.add(['fin', 'ring', 'disc'].includes(f.hat) ? aerial = hinge(cap, [0, top - 0.04, 0]) : cap.mesh())
+  let tail: THREE.Group | undefined, tailOf: ((u: number, w: number) => void) | undefined // u = the real clock, w = how much it wags
+  let crest: THREE.Group | undefined, legs2: THREE.Mesh | undefined // the heron's plume (it fluffs) and stilts (mirrored: it changes legs)
+  const neck = N(), stilts = N(), lift = pet === 'heron' ? 0.3 : 0 // the heron's neck and stilts, in the bot's coordinates
+  if (pet) { // a pet: ears on the head, a snout (dog) or a pink nose and whiskers (cat) on the face, a tail on the back
+    const { hw, ey, ez } = sk, dark = mix(fur, K, 0.45), bits = N()
+    // a tail: a chain of segments from the lower back, each bent `bend` further; it wags (dog) or sways in a slow wave (cat)
+    const segs: THREE.Group[] = [], n = pet === 'dog' ? 4 : 6, len = pet === 'dog' ? 0.15 : 0.12, r = pet === 'dog' ? 0.05 : 0.04
+    for (let i = 0; i < n && pet !== 'heron'; i++) {
+      const s = piv(N().add(cyl, pet === 'cat' && i % 2 ? dark : fur, { p: [0, len / 2, 0], s: [r, len, r] }).add(sph, fur, { p: [0, len, 0], s: r }), [0, i ? len : 0, 0], [i ? (pet === 'dog' ? 0.45 : 0.32) : pet === 'dog' ? -0.7 : -1.1, 0, 0])
+      if (i) segs[i - 1].add(s); segs.push(s)
+    }
+    if (segs.length) tail = piv(segs[0], [0.1, 0.7, -front - 0.12]) // a little to the side that faces the viewer, so it shows
+    tailOf = (u, w) => { if (pet === 'dog') tail!.rotation.y = Math.sin(u * (9 + 7 * w)) * (0.6 + 0.3 * w); else segs.forEach((s, i) => { s.rotation.z = Math.sin(u * (1.6 + 2 * w) - i * 0.6) * (0.18 + 0.3 * w) }) }
+    if (pet === 'dog') {
+      for (const s of [-1, 1]) { // floppy ears that flap a little
+        const ear = piv(N().add(sphHi, dark, { p: [0, -0.2, 0], s: [0.13, 0.27, 0.07] }), [s * hw * 0.85, top - 0.1, 0.02], [0, 0, s * 0.3])
+        hd.add(ear); on(u => { ear.rotation.z = s * (0.3 + 0.08 * Math.sin(u * 3.1 + s)) })
+      }
+      bits.add(sphHi, fur, { p: [0, ey - 0.13, ez - 0.03], s: [0.18, 0.11, 0.13] }).add(sphHi, K, { p: [0, ey - 0.09, ez + 0.09], s: [0.075, 0.05, 0.045] })
+    } else if (pet === 'cat') {
+      for (const s of [-1, 1]) bits.add(cone, fur, { p: [s * hw * 0.62, top - 0.05, -0.04], r: [0, 0, -s * 0.35], s: [0.16, 0.28, 0.09] }).add(cone, '#f4a7b9', { p: [s * hw * 0.61, top - 0.07, 0.01], r: [0, 0, -s * 0.35], s: [0.09, 0.17, 0.04] })
+      for (const x of [-0.12, 0, 0.12]) bits.add(box, dark, { p: [x, top - 0.02, -0.05], r: [0, 0, x * 1.5], s: [0.035, 0.03, 0.3] }) // tabby stripes on the crown
+      bits.add(sphHi, '#f08fa8', { p: [0, ey - 0.07, ez + 0.03], s: [0.05, 0.035, 0.03] })
+      for (const s of [-1, 1]) for (const d of [-0.035, 0, 0.035]) bits.stroke(W, s * 0.09, ey - 0.09 + d / 2, s * 0.36, ey - 0.08 + d * 1.6, ez + 0.02, 0.016, 0.01)
+    }
+    if (pet === 'heron') { // a long yellow beak, a dark crest plume; an S-curved chestnut neck with a dark stripe; stilts, one leg tucked up
+      bits.add(cone, GOLD, { p: [0, ey - 0.3, ez + 0.2], r: [H + 0.8, 0, 0], s: [0.065, 0.62, 0.05] }) // tilted down: pointing at the viewer it read as a dot
+      const plume = N()
+      for (const [t, l] of [[-1.25, 0.62], [-1.45, 0.5]]) plume.add(cyl, K, { p: [0, top - 0.12 + Math.cos(t) * l / 2, -0.2 + Math.sin(t) * l / 2], r: [t, 0, 0], s: [0.028, l, 0.028] })
+      hd.add(crest = hinge(plume, [0, top - 0.12, -0.2]))
+      for (let i = 0; i <= 12; i++) { const t = i / 12, y = 1.08 + t * (neckY - 1.04), z = 0.1 * Math.sin(t * TAU)
+        neck.add(sph, fur, { p: [0, y, z], s: 0.085 }).add(sph, K, { p: [0, y, z + 0.068], s: [0.03, 0.04, 0.03] }) }
+      stilts.add(cyl, BRN, { p: [-0.1, 0.37, 0], s: [0.025, 0.74, 0.025] }).add(sph, BRN, { p: [0.1, 0.52, 0.12], s: 0.035 }) // one long thin leg (the body stands 0.3 higher), the other tucked up (below)
+      stilts.add(box, BRN, { p: [-0.1, 0.01, 0.06], s: [0.08, 0.02, 0.2] }) // a foot
+      stilts.add(cyl, BRN, { p: [0.1, 0.62, 0.06], r: [-0.54, 0, 0], s: [0.025, 0.23, 0.025] }).add(cyl, BRN, { p: [0.1, 0.595, 0.02], r: [-0.93, 0, 0], s: [0.025, 0.25, 0.025] }) // the tucked one: thigh forward, shin back
+    }
+    hd.add(bits.mesh())
+  }
 
   const arm = (x: number) => { // the forearm turns at the elbow (only while an instrument is played)
     const up = piv(N().add(sph, GRAPH, { s: 0.12 }).add(bolt, GREY, { p: [0, 0, 0.115], r: [H, 0, 0], s: [0.04, 0.02, 0.04] }).add(cyl, PLATE, { p: [0, -0.16, 0], s: [0.08, 0.2, 0.08] }).add(sph, GRAPH, { p: [0, -0.28, 0], s: 0.085 }), [x, 1, 0])
@@ -906,7 +973,9 @@ function build(f: FigureSpec): Fig {
   for (let i = 0; i < 10; i++) { keys.add(box, W, { p: [-0.27 + i * 0.06, 0.03, 0.02], s: [0.052, 0.02, 0.11] }); if (i % 7 % 3 !== 2 && i < 9) keys.add(box, K, { p: [-0.24 + i * 0.06, 0.045, -0.01], s: [0.03, 0.02, 0.06] }) }
   const tools = [piv(mic, [0, 0, 0], [0.7, 0, -0.49]), G(tamb), piv(keytar, [0, 0.95, front + 0.03], [0, 0, -0.23]), piv(keys, [0, 0.86, front + 0.08], [0.45, 0, 0])]
   tools.forEach(o => { o.visible = false })
-  const bot = piv(G(body, lights.mesh(GLOW), hd, left, right, ...tools), [-0.34, 0, 0]), size = { general: 1.05, faculty: 1, programme: 0.92, office: 0.95 }[f.shape]
+  const upper = G(body, lights.mesh(GLOW), hd, left, right, ...tools, ...(tail ? [tail] : []), ...(lift ? [neck.mesh()] : []))
+  upper.position.y = lift
+  const bot = piv(G(upper, ...(lift ? [legs2 = stilts.mesh()] : [])), [-0.34, 0, 0]), size = { general: 1.05, faculty: 1, programme: 0.92, office: 0.95 }[f.shape]
   bot.scale.setScalar(size)
 
   const item = G(PROP[f.prop](a, on))
@@ -956,20 +1025,22 @@ function build(f: FigureSpec): Fig {
   const spinBody = spinner(), spinProp = spinner()
   let az = 0, azAt = 0 // the aerial's turn, and when it was last set
   return {
-    root: G(base, glow, bot, prop), bots: [bot], rest: [base, glow, prop], glow, fy: 1.22 + top * hs / 2, tools, rig,
+    root: G(base, glow, bot, prop), bots: [bot], rest: [base, glow, prop], glow, fy: 1.22 + lift + (neckY - 1.2) + top * hs / 2, tools, rig,
     tick(u0, e, m) {
       const [ty, th, ha, mi] = m ?? [0, 0, 0, 0], sh = show(u0, f.no, calmOf(e, m), m?.[4]), u = sh.T, { t, w } = sh
+      if (pet && w > 0) petAct(pet, sh.p % 5, t, sh.d)
+      const pw = pet && w > 0 ? w : 0 // how much of a pet's act shows (pm is shared: read only while acting)
       // A hop has weight: it squashes as it lands and stretches in the air; the head sinks a moment later, the aerial whips after it.
       const x = Math.min(1.2, e + ha), hop = Math.abs(Math.sin(u * 5.5)), land = x * (1 - hop) ** 3
       bot.position.y = (0.5 + 0.5 * Math.sin(u * 1.6)) * 0.04 + x * hop * 0.15
       bot.scale.set(size * (1 + 0.07 * land), size * (1 - 0.1 * land + 0.012 * Math.sin(u * 1.6 - 1)), size * (1 + 0.07 * land))
       bot.rotation.y = 0.3 + Math.sin(u * 0.7) * 0.2 * (1 - ty) + 0.45 * mi // at a loss it turns to the search panels
       bot.rotation.z = Math.sin(u * 1.1) * 0.03
-      hd.position.y = 1.2 - 0.05 * x * (1 - Math.abs(Math.sin(u * 5.5 - 0.5))) ** 3
+      hd.position.y = neckY - 0.05 * x * (1 - Math.abs(Math.sin(u * 5.5 - 0.5))) ** 3
       hd.rotation.z = Math.sin(u * 1.3) * 0.08 + 0.22 * th - 0.18 * mi
       hd.rotation.x = Math.sin(u * 0.9) * 0.05 + 0.28 * ty + 0.2 * ha * Math.sin(u * 5.5) ** 2 // looks down at the message box; nods, in time with the hop
       if (aerial) aerial.rotation.z = -Math.sin(u * 1.3 - 0.8) * 0.1 - 0.16 * th + x * Math.sin(u * 11 - 1) * 0.14
-      rig.act(u0, e, ty, th, ha, mi, Math.max(m?.[4] ?? 0, sh.p > 5 ? w : 0), !!m)
+      rig.act(u0, e, ty, th, ha, mi, Math.max(m?.[4] ?? 0, sh.p > 5 ? w : 0), !!m, pw * pm.shut)
       left.rotation.z = -0.22 + Math.sin(u * 2.2) * 0.12 - 0.5 * mi - e * (2.05 + Math.sin(u * 10) * 0.55) // a shrug; a wave of the free hand
       left.rotation.x = Math.sin(u * 2.2) * 0.25 * (1 - e)
       const xe = Math.min(1, e) // as above: mixed, never a speed that depends on e
@@ -982,8 +1053,9 @@ function build(f: FigureSpec): Fig {
       for (const k of ticks) k(u, e)
       // The show. Every pose starts with a crouch (the wind-up) and ends settling back into the idle stance.
       let ry = 0, rx = 0, up = 0, la = 0, lx = 0, ra = 0, py = 0, hx = 0, hz = 0, turn = 0, flip = 0, rz = 0, bx = 0, hy = 0, dip = seg(t, 0.04, 0.18) - seg(t, 0.2, 0.3)
-      const tool = w > 0 && sh.p > 11 ? tools[sh.p - 12] : undefined
-      if (w > 0 && sh.p > 5) { if (tool) perform(sh.p - 12, t, sh.d); else dance(sh.p - 6, t, sh.d); ({ ry, rz, bx, up, dip, hy, hx, hz, la, lx, ra, py, turn } = mv) }
+      const tool = w > 0 && sh.p > 11 && !pet ? tools[sh.p - 12] : undefined
+      if (pw) { ({ ry, rz, bx, up, dip, hy, hx, hz, la, lx, ra, py, turn } = mv); rx = pm.rx }
+      else if (w > 0 && sh.p > 5) { if (tool) perform(sh.p - 12, t, sh.d); else dance(sh.p - 6, t, sh.d); ({ ry, rz, bx, up, dip, hy, hx, hz, la, lx, ra, py, turn } = mv) }
       else if (w > 0) switch (sh.p) {
         case 0: { const h = seg(t, 0.2, 0.32); ry = -0.2 * h; rx = -0.06 * h; la = -0.55 * h; ra = 0.3 * h; py = 0.1 * h; hx = -0.2 * h; hz = -0.1 * h; break } // the poster: chest out, chin up, the prop held high
         case 1: { const h = Math.sin(PI * seg(t, 0.22, 0.78)); flip = seg(t, 0.26, 0.74); py = 0.2 * h; ra = 0.3 * h; hx = -0.3 * h; la = -0.3 * h; break } // the prop is thrown up, turns in the air and is caught
@@ -1007,9 +1079,12 @@ function build(f: FigureSpec): Fig {
         reach(left, lf, mv.gx, mv.gy, front + mv.gz, -1, out)
         if (both) reach(right, rf, -mv.qx, mv.qy, front + mv.gz, 1, out)
       }
+      if (tailOf) tailOf(u0, pw * pm.wag + 0.3 * e)
+      if (crest) crest.rotation.x = -0.7 * pw * pm.fluff
+      if (legs2) legs2.scale.x = pw && pm.step ? -1 : 1
       if (aerial) { const to = aerial.rotation.z + w * (0.3 * dip - 0.25 * Math.sin(t * 13) * Math.sin(PI * turn)); az += (to - az) * (1 - Math.exp(-Math.min(0.1, Math.abs(u0 - azAt)) * 9)); azAt = u0; aerial.rotation.z = az } // whips while the body turns, swelling and fading with the turn; it trails what moves it (a light part on a springy stalk), so a quick beat does not rattle it
     },
   }
 }
-export { build as buildFigure, show } // for scripts that measure the motion
+export { build as buildFigure, show, petAct, pm, mv } // for scripts and tests that measure the motion
 
