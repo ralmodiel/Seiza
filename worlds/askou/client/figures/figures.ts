@@ -48,7 +48,7 @@ export const FAMILIES: Record<Family, { label: string; shades: string[] }> = {
 export type Look = 'fem' | 'masc' | 'neutral'
 /** no = the unit number on its chest display or name plate (1..99). */
 /** trim = the colour of the dark parts (sensor fin, thruster nozzle) when it is not a darker body colour. */
-export interface FigureSpec { family: Family; shape: Shape; prop: Prop; accent: Accent; hat: Hat; head: Head; build: Build; body: string; no: number; nick?: string; trim?: string; look: Look; /** a pet: ears, snout, whiskers and a tail on the robot (components/figures3d) */ animal?: 'dog' | 'cat' | 'heron'; /** which variant of the look's styling (fem: 0 bob, 1 up-do, 2 the chancellor's; neutral: 0-2) */ vary: number }
+export interface FigureSpec { family: Family; shape: Shape; prop: Prop; accent: Accent; hat: Hat; head: Head; build: Build; body: string; no: number; nick?: string; trim?: string; look: Look; /** a pet: drawn as that animal instead of a robot (components/figures3d animal) */ animal?: 'dog' | 'cat' | 'heron'; /** which variant of the look's styling (fem: 0 bob, 1 up-do, 2 the chancellor's; neutral: 0-2) */ vary: number }
 
 /** nick = the bot's own name: the speaker in its chat bubbles and the big label of its tile. */
 type Row = [nick: string, prop: Prop, accent: Accent, hat?: Hat]
