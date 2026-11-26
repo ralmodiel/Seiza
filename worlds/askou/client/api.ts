@@ -21,6 +21,8 @@ export interface Answer {
   pieces: Piece[];
   /** "Did you mean": prepared questions close to an unanswered one. */
   suggestions: string[];
+  /** The first answer's follow-up questions ("Another joke!" under an animal bot's joke): plain text, at most 3. */
+  followUps: string[];
   /** What the UPOU pages say, and pages its search found. */
   pages: { title: string; url: string; text: string }[];
   /** Academic calendar dates, when the answer is about dates. */
@@ -82,6 +84,7 @@ export function toAnswer(raw: unknown): Answer {
     sessionId: str(r.sessionId, 100),
     pieces,
     suggestions: list(r.suggestions).flatMap((s) => str(record(s).text, 200) ?? []).slice(0, 3),
+    followUps: list(record(list(r.answers)[0]).followUps).flatMap((q) => str(q, 200) ?? []).slice(0, 3),
     pages: [...list(r.excerpts).flatMap((e) => page(e, "text")), ...list(r.searchResults).flatMap((s) => page(s, "digest"))].slice(0, 4),
     dates: list(r.calendar).flatMap((e) => {
       const entry = record(e), title = str(entry.title, 120), from = day(entry.startDate), to = day(entry.endDate);

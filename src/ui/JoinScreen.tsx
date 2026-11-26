@@ -25,6 +25,8 @@ export interface JoinedIdentity extends AvatarSelection {
 interface JoinScreenProps {
   world: WorldConfig;
   onJoin: (identity: JoinedIdentity) => void;
+  /** Join at once with the defaults (or the remembered name and avatar), as pressing Join would: a shared link's landing. */
+  auto?: boolean;
 }
 
 // IndexedDB normally answers in a few milliseconds. If it's blocked or
@@ -55,7 +57,7 @@ const STAR_DOTS_NEAR = [
  * uploaded file, which renders instantly from disk and is silently
  * re-uploaded if the deployment's copy has expired.
  */
-export function JoinScreen({ world, onJoin }: JoinScreenProps) {
+export function JoinScreen({ world, onJoin, auto = false }: JoinScreenProps) {
   const lang = useLang();
   const [loaded, setLoaded] = useState(false);
   const [returning, setReturning] = useState(false);
@@ -102,9 +104,14 @@ export function JoinScreen({ world, onJoin }: JoinScreenProps) {
   }, [world]);
 
   const canSubmit = loaded && displayName.trim().length > 0 && !joining;
+  // Once the profile is read; a failure (an uploaded avatar gone) shows the form with its error.
+  useEffect(() => {
+    if (auto && loaded) void handleSubmit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auto, loaded]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(e?: React.FormEvent) {
+    e?.preventDefault();
     if (!canSubmit) return;
     // Inside the Join click or Enter, before anything awaits: the gesture
     // that lets voices play as soon as you're in (src/media/audioContext.ts).
@@ -160,7 +167,7 @@ export function JoinScreen({ world, onJoin }: JoinScreenProps) {
       <div aria-hidden style={{ position: "absolute", inset: 0, backgroundImage: STAR_DOTS_NEAR, pointerEvents: "none" }} />
 
       <LangToggle style={{ position: "absolute", top: 16, right: 16, zIndex: 2 }} />
-      <form onSubmit={handleSubmit} className="seiza-join-form seiza-rise-in">
+      <form onSubmit={handleSubmit} className="seiza-join-form seiza-rise-in" style={auto && !error ? { visibility: "hidden" } : undefined}>
         <div className="seiza-join-col">
           <div>
             <div style={{ fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: ACCENT_COLOR, opacity: 0.85 }}>Seiza · 星座</div>

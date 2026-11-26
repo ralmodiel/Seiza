@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { layoutVillage, ROOT } from "./layout";
 import { SNAPSHOT, toBots } from "./api";
 import { botsIn, parseReply } from "./reply";
-import { aimAt, cameraAt, pairMid, setTravel, standBy, standWith, startersOf, taglineOf, type Message } from "./store";
+import { aimAt, cameraAt, linkedBot, linkedQuestion, pairMid, shareLink, setTravel, standBy, standWith, startersOf, taglineOf, type Message } from "./store";
 import { figureFor } from "./figures/figures";
 import { groupsOf } from "./VillageHud";
 import { answerParts, panelText } from "./VillageXr";
@@ -10,6 +10,23 @@ import { answerParts, panelText } from "./VillageXr";
 const posts = layoutVillage(SNAPSHOT);
 
 describe("the village", () => {
+  it("reads the bot a link names, as Askou's own /b/<key> links do", () => {
+    expect(linkedBot("/b/Bantay")).toBe("bantay");
+    expect(linkedBot("/b/fmdsdlup/")).toBe("fmdsdlup");
+    expect(linkedBot("/")).toBeNull();
+    expect(linkedBot("/b/")).toBeNull();
+    expect(linkedBot("/b/a/b")).toBeNull();
+  });
+
+  it("reads a response link's question as bounded plain text, and builds the same links", () => {
+    expect(linkedQuestion("?q=How%20do%20I%20apply%3F")).toBe("How do I apply?");
+    expect(linkedQuestion("?q=%20%3Cb%3Ehi%3C%2Fb%3E%0A")).toBe("<b>hi</b>");
+    expect(linkedQuestion(`?q=${"a".repeat(300)}`)).toHaveLength(200);
+    expect(linkedQuestion("")).toBe("");
+    expect(shareLink("https://v.x", "bantay", "How do I apply?")).toBe("https://v.x/b/bantay?q=How%20do%20I%20apply%3F");
+    expect(shareLink("https://v.x", "upou")).toBe("https://v.x/b/upou");
+  });
+
   it("stands a visitor 2.3 m from a bot, on walkable ground only", () => {
     const post = posts[0];
     // walkable only east of the bot

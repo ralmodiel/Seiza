@@ -286,9 +286,53 @@ export function standWith(post: Post) {
   travel.faceToward(...aimAt(post, [live.stood.x, live.stood.z], third, aside));
 }
 
-/** A visitor who arrives behind their own avatar (Seiza's view on a touch screen) sees its back where the two mascots stand,
- *  their name over its head: they arrive standing by the pair, as a visit to a bot does. Everyone else arrives as world.json says. */
+/** The bot a link names: `/b/<key>`, the same link as Askou's own chat page, so a bot's link works in either. */
+export function linkedBot(path = typeof location === "undefined" ? "" : location.pathname): string | null {
+  const m = /^\/b\/([a-z0-9_-]{1,64})\/?$/i.exec(path);
+  return m ? m[1].toLowerCase() : null;
+}
+
+/** The question a response's link carries (`/b/<key>?q=…`): visitor text, trimmed, control characters dropped, at most
+ *  200 characters; shown as a text node only. */
+export function linkedQuestion(search = typeof location === "undefined" ? "" : location.search): string {
+  const q = new URLSearchParams(search).get("q") ?? "";
+  return q.replace(/[\u0000-\u001f\u007f]+/g, " ").trim().slice(0, 200).trim();
+}
+
+/** The link to a bot, with `q` to its answer to that question: the same links as Askou's share buttons, on this site's origin. */
+export function shareLink(origin: string, key: string, q?: string): string {
+  const question = linkedQuestion(q ? `?${new URLSearchParams({ q })}` : "");
+  return `${origin}/b/${key}${question ? `?q=${encodeURIComponent(question)}` : ""}`;
+}
+
+/** The system share sheet where there is one, else the clipboard. */
+export async function shareUrl(url: string, title: string): Promise<"shared" | "copied" | "cancelled" | "failed"> {
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, url });
+      return "shared";
+    } catch (e) {
+      if ((e as Error)?.name === "AbortError") return "cancelled";
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    return "copied";
+  } catch {
+    return "failed";
+  }
+}
+
+/** A visitor who came by a bot's link (linkedBot) arrives beside that bot, talking to it. A visitor who arrives behind
+ *  their own avatar (Seiza's view on a touch screen) sees its back where the two mascots stand, their name over its head:
+ *  they arrive standing by the pair, as a visit to a bot does. Everyone else arrives as world.json says. */
 export function arrive() {
+  const linked = postOf(linkedBot());
+  if (travel && linked) {
+    live.arrivedBy = linked.key;
+    visitBot(linked.key, linkedQuestion() || undefined);
+    return;
+  }
   const post = postOf(ROOT), at = travel?.getSelfPosition();
   if (!travel || !post || !at || travel.ahead() || !travel.third() || Math.hypot(at[0] - HUB.x, at[2] - HUB.z) > 0.3) return;
   live.arrivedBy = post.key;

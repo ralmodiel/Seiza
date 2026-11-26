@@ -27,6 +27,7 @@ describe("toAnswer", () => {
       sessionId: "s1",
       replyHtml: 'Ask <a class="link" href="https://askou.example/b/registrar">the Registrar</a>.<br/><strong>Fees</strong>',
       suggestions: [{ responseId: "1", text: "How do I enroll?" }, { text: 5 }, "x"],
+      answers: [{ id: "a1", followUps: ["Another joke!", 7] }],
       excerpts: [{ title: "FAQ", url: "https://registrar.upou.edu.ph/faq", text: "Enrol <b>online</b>." }],
       searchResults: [{ title: "Bad", url: "javascript:alert(1)", digest: "x" }, { title: "Mail", url: "mailto:a@b.c", digest: "x" }, { title: "Ok", url: "https://upou.edu.ph/ok", digest: "A page" }],
       calendar: [{ title: "Registration", startDate: "2027-01-12", endDate: "2027-01-15" }, { title: "No date" }],
@@ -35,6 +36,7 @@ describe("toAnswer", () => {
     expect(a.sessionId).toBe("s1");
     expect(plainText(a.pieces)).toBe("Ask the Registrar.\nFees");
     expect(a.suggestions).toEqual(["How do I enroll?"]);
+    expect(a.followUps).toEqual(["Another joke!"]);
     expect(a.pages).toEqual([{ title: "FAQ", url: "https://registrar.upou.edu.ph/faq", text: "Enrol online." }, { title: "Ok", url: "https://upou.edu.ph/ok", text: "A page" }]);
     expect(a.dates).toHaveLength(1); // the entry without a date is left out; how a date is written is the browser's
     expect(a.dates[0]).toMatch(/^Registration: .*12.*2027 – .*15.*2027$/);
@@ -44,7 +46,7 @@ describe("toAnswer", () => {
 
   it("survives a reply that is not what Askou documents", () => {
     for (const odd of [null, "<html>", 7, { replyHtml: 3, suggestions: "no", consult: "x", calendar: {} }]) {
-      expect(toAnswer(odd)).toEqual({ sessionId: null, pieces: [], suggestions: [], pages: [], dates: [], consult: null, refer: [] });
+      expect(toAnswer(odd)).toEqual({ sessionId: null, pieces: [], suggestions: [], followUps: [], pages: [], dates: [], consult: null, refer: [] });
     }
   });
 });

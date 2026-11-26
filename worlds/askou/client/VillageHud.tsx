@@ -7,7 +7,7 @@ import { MAX_QUESTION, type Bot } from "./api";
 import { familyOf, TINT } from "./Constellation";
 import type { Post } from "./layout";
 import type { Piece } from "./reply";
-import { askBot, botOf, connect, dance, live as scene, nickOf, openBot, setDirectory, setTyping, showWay, startersOf, taglineOf, useVillage, visitBot, type Message } from "./store";
+import { askBot, botOf, connect, dance, live as scene, nickOf, openBot, setDirectory, setTyping, shareLink, shareUrl, showWay, startersOf, taglineOf, useVillage, visitBot, type Message } from "./store";
 
 const CSS = `
 .av { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; color: #fff; }
@@ -265,6 +265,28 @@ function Directory({ bots, posts, near }: { bots: Bot[]; posts: Post[]; near: st
   );
 }
 
+/** Shares a bot's link (with `question`, the link to its answer): the share sheet, else copied, and a small note says so. */
+function Share({ bot, question, label }: { bot: Bot; question?: string; label: string }) {
+  const [note, setNote] = useState("");
+  useEffect(() => {
+    if (!note) return;
+    const t = setTimeout(() => setNote(""), 2500);
+    return () => clearTimeout(t);
+  }, [note]);
+  const run = async () => {
+    const link = shareLink(location.origin, bot.key, question), got = await shareUrl(link, `${nickOf(bot)} in Askou Village`);
+    setNote(got === "copied" ? "Link copied" : got === "failed" ? `Copy this link: ${link}` : "");
+  };
+  return (
+    <>
+      <button type="button" data-share className="av-btn av-small" style={{ ...small, flex: "none" }} onClick={() => void run()} aria-label={label} title={label}>
+        <span aria-hidden>🔗</span><span className="av-word"> Share</span>
+      </button>
+      <span role="status" className={note ? undefined : "av-sr"} style={note ? { ...panelStyle, position: "fixed", left: "50%", bottom: 16, transform: "translateX(-50%)", padding: "6px 12px", fontSize: 13, zIndex: 50, maxWidth: "calc(100vw - 32px)", wordBreak: "break-all" } : undefined}>{note}</span>
+    </>
+  );
+}
+
 /** A reply's pieces as nodes. A link to another bot becomes a button that takes the visitor (and the question) there. */
 function Pieces({ pieces, question, waiting }: { pieces: Piece[]; question?: string; waiting?: boolean }): ReactNode {
   return pieces.map((p, i) => {
@@ -353,6 +375,20 @@ function BotMessage({ bot, m, last, waiting }: { bot: Bot; m: Message; last: boo
           ))}
         </div>
       )}
+      {last && a && a.followUps.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+          {a.followUps.map((q) => (
+            <button key={q} type="button" className="av-btn av-small" style={small} disabled={waiting} onClick={() => void askBot(q, bot.key, true)}>
+              {q}
+            </button>
+          ))}
+        </div>
+      )}
+      {!m.failed && m.question && (
+        <div style={{ justifySelf: "start" }}>
+          <Share bot={bot} question={m.question} label="Share a link to this answer" />
+        </div>
+      )}
       {last && a && a.suggestions.length > 0 && (
         <div style={{ display: "grid", gap: 4, justifyItems: "start" }}>
           <div style={{ fontSize: 12, opacity: 0.65 }}>Did you mean:</div>
@@ -412,6 +448,7 @@ function Chat({ bot, messages, busy, waiting, near, live }: { bot: Bot; messages
           {tagline ? <i className={`av-clamp${nick !== bot.name ? " av-hint" : ""}`} style={{ fontSize: 12, opacity: 0.9, lineHeight: 1.25 }} title={tagline}>{tagline}</i> : nick === bot.name && <div style={{ fontSize: 12, opacity: 0.72 }}>UPOU bot</div>}
         </div>
         <div className="av-acts">
+          <Share bot={bot} label={`Share a link to ${nick}`} />
           <button type="button" className="av-btn av-small" style={{ ...small, flex: "none" }} onClick={() => dance(bot.key)} aria-label={`Ask ${nick} to dance`}>
             <span aria-hidden>🎵</span><span className="av-word"> Let's Dance</span>
           </button>

@@ -249,7 +249,8 @@ export default function App() {
   const showTouchControls = useWantsTouchControls();
   const hasHoverPointer = useMediaQuery("(hover: hover)");
   // Shown once on a first visit; "?" or the help button reopens it.
-  const [guideOpen, setGuideOpen] = useState(() => !hasSeenControlsGuide());
+  // A shared bot link lands on the bot: the controls guide would cover it, so it waits for the "?" button.
+  const [guideOpen, setGuideOpen] = useState(() => !hasSeenControlsGuide() && !/^\/b\//.test(location.pathname));
   const gestureSeqRef = useRef(0);
   const gestureTimerRef = useRef<number | null>(null);
 
@@ -1228,7 +1229,8 @@ export default function App() {
   if (roomFull) return <CenteredMessage text={L(`This world is currently full (${roomFull} people). Please try again later.`, `このワールドは満員です(${roomFull}人)。しばらくしてからもう一度お試しください。`)} />;
   if (wasKicked) return <CenteredMessage text={L("An admin removed you from this room. Reload the page if you'd like to rejoin.", "管理者によって部屋から退出させられました。もう一度入るにはページを再読み込みしてください。")} />;
   if (passwordRequired) return <RoomPasswordGate onSubmit={joinWithPassword} />;
-  if (!joined) return <JoinScreen world={world} onJoin={setJoined} />;
+  // A shared bot link (/b/<key>) or ?autojoin=1 lands in the world at once: the join form only on the plain landing.
+  if (!joined) return <JoinScreen world={world} onJoin={setJoined} auto={/^\/b\//.test(location.pathname) || new URLSearchParams(location.search).has("autojoin")} />;
 
   const editingEnabled = world.editingEnabled !== false;
   const voiceVisible = world.voiceEnabled;
